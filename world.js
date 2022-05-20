@@ -5,7 +5,7 @@ this file contains the singleplayer code.
 import * as THREE from 'three';
 // import * as Y from 'yjs';
 import * as Z from 'zjs/z.mjs';
-import WSRTC from 'wsrtc/wsrtc.js';
+import WSRTC from './packages/wsrtc/wsrtc.js';
 
 import hpManager from './hp-manager.js';
 // import {rigManager} from './rig.js';

@@ -7,7 +7,7 @@ import LegsManager from './vrarmik/LegsManager.js';
 import {scene, camera} from '../renderer.js';
 import MicrophoneWorker from './microphone-worker.js';
 import {AudioRecognizer} from '../audio-recognizer.js';
-import { getAudioContext } from 'wsrtc/ws-audio-context.js';
+import { getAudioContext } from '../packages/wsrtc/ws-audio-context.js';
 import {
   // angleDifference,
   // getVelocityDampingFactor,

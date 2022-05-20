@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import express from 'express';
 import vite from 'vite';
-import wsrtc from 'wsrtc/wsrtc-server.mjs';
+import wsrtc from './packages/wsrtc/wsrtc-server.mjs';
 import dotenv from 'dotenv'
 
 // Variables in .env and .env.defaults will be added to process.env

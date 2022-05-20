@@ -1,5 +1,5 @@
 import Avatar from './avatars/avatars.js';
-import WSRTC from 'wsrtc/wsrtc.js';
+import WSRTC from './packages/wsrtc/wsrtc.js';
 
 const loadPromise = (async () => {
   const audioContext = WSRTC.getAudioContext();

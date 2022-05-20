@@ -1,9 +1,9 @@
 /*
 this file is responisible for maintaining player state that is network-replicated.
 */
-import {WsAudioDecoder} from 'wsrtc/ws-codec.js';
-import {ensureAudioContext, getAudioContext} from'wsrtc/ws-audio-context.js';
-import {getAudioDataBuffer} from 'wsrtc/ws-util.js';
+import {WsAudioDecoder} from './packages/wsrtc/ws-codec.js';
+import {ensureAudioContext, getAudioContext} from'./packages/wsrtc/ws-audio-context.js';
+import {getAudioDataBuffer} from './packages/wsrtc/ws-util.js';
 
 import {murmurhash3} from './procgen/murmurhash3.js';
 import * as THREE from "three";
