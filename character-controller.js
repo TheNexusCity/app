@@ -409,6 +409,7 @@ class PlayerBase extends THREE.Object3D {
     } else {
       this.handleWearUpdate(app, true)
     }
+    app.isUsed = true
   }
 
   unwear(app, { destroy = false } = {}) {
@@ -469,6 +470,7 @@ class PlayerBase extends THREE.Object3D {
 
     this.wornApps.splice(this.wornApps.indexOf(app));
     this.removedWornApp = app
+    app.isUsed = false
   }
 }
 

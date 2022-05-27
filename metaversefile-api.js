@@ -71,6 +71,7 @@ class App extends THREE.Object3D {
     this.physicsObjects = [];
     this.hitTracker = null;
     this.hasSubApps = false;
+    this.isUsed = false;
     this.lastMatrix = new THREE.Matrix4();
 
     const startframe = () => {

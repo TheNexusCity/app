@@ -775,7 +775,11 @@ const _gameUpdate = (timestamp, timeDiff) => {
           );
 
           _updateActivateAnimation(grabUseMesh.position);
-          grabUseMesh.visible = true;
+
+          if (!object.isUsed) {
+            grabUseMesh.visible = true;
+          }
+          
         }
       }
     }
