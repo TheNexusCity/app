@@ -6,7 +6,7 @@ import physicsManager from "../physics-manager.js";
 // import {glowMaterial} from '../shaders.js';
 // import easing from '../easing.js';
 import npcManager from "../npc-manager.js";
-import { AppManager } from "../app-manager.js";
+// import { AppManager } from "../app-manager.js";
 // import {rarityColors} from '../constants.js';
 
 const localVector = new THREE.Vector3();
@@ -21,9 +21,9 @@ export default (app, component) => {
   let appAimAnimationMixers = null;
 
   const initialScale = app.scale.clone();
-  const initialQuaternion = new THREE.Quaternion();
+  // const initialQuaternion = new THREE.Quaternion();
 
-  let lastWornApp = null;
+  // let lastWornApp = null;
   let localPlayer = null;
 
   const wearupdate = (e) => {
@@ -32,7 +32,7 @@ export default (app, component) => {
       initialScale.copy(app.scale);
 
       localPlayer = e.player;
-      lastWornApp = app;
+      // lastWornApp = app;
       // console.log('activate component', app, wear);
       if (wearSpec) {
         // const {app, wearSpec} = e.data;
@@ -240,7 +240,6 @@ export default (app, component) => {
     }
   };
   const frame = metaversefile.useFrame(({ timestamp, timeDiff }) => {
-    // const localPlayer = metaversefile.useLocalPlayer();
     if (wearSpec && localPlayer.avatar) {
       const { instanceId } = app;
 

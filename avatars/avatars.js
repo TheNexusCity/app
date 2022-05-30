@@ -57,13 +57,17 @@ import Blinker from './Blinker.js'
 import Nodder from './Nodder.js'
 import Looker from './Looker.js'
 
+import * as wind from './simulation/wind.js';
+
 
 const localVector = new THREE.Vector3();
 const localVector2 = new THREE.Vector3();
 const localVector3 = new THREE.Vector3();
 // const localVector4 = new THREE.Vector3();
 // const localVector5 = new THREE.Vector3();
-// const localVector6 = new THREE.Vector3();
+// const localVector6 = new THREE.Vector3();     
+
+
 const localQuaternion = new THREE.Quaternion();
 const localQuaternion2 = new THREE.Quaternion();
 // const localQuaternion3 = new THREE.Quaternion();
@@ -1948,6 +1952,13 @@ class Avatar {
     // this.springBoneTimeStep.update(timeDiff);
     this.springBoneManager && this.springBoneManager.lateUpdate(timeDiffS);
 
+    // update wind in simulation
+    const _updateWind = () =>{
+      const headPosition = localVector.setFromMatrixPosition(this.modelBoneOutputs.Head.matrixWorld);
+      wind.update(timestamp, headPosition, this.springBoneManager)
+    }
+    _updateWind();
+
     // XXX hook these up
     this.nodder.update(now);
     this.emoter.update(now);
@@ -1994,9 +2005,10 @@ class Avatar {
           await audioContext.resume();
         })();
       }
+      const localPlayer = metaversefile.useLocalPlayer();
       this.microphoneWorker = new MicrophoneWorker({
         audioContext,
-        muted: false,
+        muted: localPlayer.avatar === this,
         emitVolume: true,
         emitBuffer: true,
       });
