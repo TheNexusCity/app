@@ -245,48 +245,95 @@ export default (app, component) => {
       const { instanceId } = app;
 
       // animations
-      if (app.glb) {
-        const appAimAction = Array.from(localPlayer.getActionsState()).find(
-          (action) => action.type === "aim" && action.instanceId === instanceId
-        );
-        const { animations } = app.glb;
+      // Not sure this exactly called
+      // if (app.glb) {
+      //   const appAimAction = Array.from(localPlayer.getActionsState()).find(
+      //     (action) => action.type === "aim" && action.instanceId === instanceId
+      //   );
+      //   const { animations } = app.glb;
 
-        const appAnimation = appAimAction?.appAnimation
-          ? animations.find((a) => a.name === appAimAction.appAnimation)
-          : null;
-        if (appAnimation && !appAimAnimationMixers) {
-          const clip = animations.find(
-            (a) => a.name === appAimAction.appAnimation
-          );
-          if (clip) {
-            appAimAnimationMixers = [];
-            app.glb.scene.traverse((o) => {
-              if (o.isMesh) {
-                const mixer = new THREE.AnimationMixer(o);
+      //   if (appAimAction) {
+      //     debugger
+      //   }
 
-                const action = mixer.clipAction(clip);
-                action.setLoop(0, 0);
-                action.play();
+      //   const appAnimation = appAimAction?.appAnimation
+      //     ? animations.find((a) => a.name === appAimAction.appAnimation)
+      //     : null;
+      //   if (appAnimation && !appAimAnimationMixers) {
+      //     const clip = animations.find(
+      //       (a) => a.name === appAimAction.appAnimation
+      //     );
+      //     if (clip) {
+      //       appAimAnimationMixers = [];
+      //       app.glb.scene.traverse((o) => {
+      //         if (o.isMesh) {
+      //           const mixer = new THREE.AnimationMixer(o);
 
-                const appAimAnimationMixer = {
-                  update(deltaSeconds) {
-                    mixer.update(deltaSeconds);
-                  },
-                  destroy() {
-                    action.stop();
-                  },
-                };
-                appAimAnimationMixers.push(appAimAnimationMixer);
-              }
-            });
-          }
-        } else if (appAimAnimationMixers && !appAnimation) {
-          for (const appAimAnimationMixer of appAimAnimationMixers) {
-            appAimAnimationMixer.destroy();
-          }
-          appAimAnimationMixers = null;
-        }
-      }
+      //           const action = mixer.clipAction(clip);
+      //           action.setLoop(0, 0);
+      //           action.play();
+
+      //           const appAimAnimationMixer = {
+      //             update(deltaSeconds) {
+      //               mixer.update(deltaSeconds);
+      //             },
+      //             destroy() {
+      //               action.stop();
+      //             },
+      //           };
+      //           appAimAnimationMixers.push(appAimAnimationMixer);
+      //         }
+      //       });
+      //     }
+      //   } else if (appAimAnimationMixers && !appAnimation) {
+      //     for (const appAimAnimationMixer of appAimAnimationMixers) {
+      //       appAimAnimationMixer.destroy();
+      //     }
+      //     appAimAnimationMixers = null;
+      //   }
+      // }
+
+
+      //bone bindings
+      // {
+      //   const appAimAction = Array.from(localPlayer.getActionsState()).find(
+      //     (action) => action.type === "aim" && action.instanceId === instanceId
+      //   );
+      //   if (appAimAction?.boneAttachment && wearSpec.boneAttachment) {
+      //     _copyBoneAttachment(appAimAction);
+      //   }
+
+      //   const wearAimComponent = app?.getComponent("aim");
+      //   debugger
+      // }
+
+
+      // const wearAimComponent = wearAimApp?.getComponent("aim");
+
+      // const { instanceId } = wearAimApp ?? {};
+      // const {
+      //   appAnimation,
+      //   playerAnimation,
+      //   boneAttachment,
+      //   position,
+      //   quaternion,
+      //   scale,
+      // } = wearAimComponent ?? {};
+      // const aimAction = {
+      //   type: "aim",
+      //   instanceId,
+      //   appAnimation,
+      //   playerAnimation,
+      //   boneAttachment,
+      //   position,
+      //   quaternion,
+      //   scale,
+      // };
+      // console.error(aimAction)
+      // localPlayer.addAction(aimAction);
+      
+
+
       // bone bindings
       {
         const appUseAction = Array.from(localPlayer.getActionsState()).find(

@@ -120,6 +120,7 @@ class PlayersManager {
   updateRemotePlayers(timestamp, timeDiff) {
     for (const remotePlayer of this.remotePlayers.values()) {
       remotePlayer.updateAvatar(timestamp, timeDiff);
+      remotePlayer.updatePhysics(timestamp, timeDiff);
     }
   }
 }

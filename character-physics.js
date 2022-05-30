@@ -57,6 +57,7 @@ class CharacterPhysics {
     }
   }
   applyGravity(timeDiffS) {
+
     // if (this.player) {
       if (this.player.hasAction('jump') && !this.player.hasAction('fly')) {
         localVector.copy(physicsManager.getGravity())
@@ -320,7 +321,10 @@ class CharacterPhysics {
         this.player.hands[i].enabled = enabled;
       }
     };
-    _updateHandsEnabled();
+
+    if (!this.player.isRemotePlayer) {
+      _updateHandsEnabled();
+    }
 
     const _updateFakeHands = () => {
       if (!session) {
@@ -341,7 +345,7 @@ class CharacterPhysics {
           this.player.leftHand.quaternion.copy(leftGamepadQuaternion);
         }
         if (this.player.hands[1].enabled) {
-          const rightGamepadPosition = localVector2.copy(localVector)
+           const rightGamepadPosition = localVector2.copy(localVector)
             .add(localVector3.copy(rightHandOffset).multiplyScalar(handOffsetScale).applyQuaternion(localQuaternion));
           const rightGamepadQuaternion = localQuaternion;
           /* const rightGamepadPointer = 0;
@@ -353,7 +357,10 @@ class CharacterPhysics {
         }
       }
     };
-    _updateFakeHands();
+
+    if (!this.player.isRemotePlayer) {
+      _updateFakeHands();
+    }
 
     const _updatePistolIkAnimation = () => {
       const kickbackTime = 300;
@@ -403,6 +410,10 @@ class CharacterPhysics {
         }
       }
     };
+    
+    if (this.player.isRemotePlayer) {
+      debugger
+    }
     _updatePistolIkAnimation();
 
     const _updateBowIkAnimation = () => {
@@ -441,12 +452,17 @@ class CharacterPhysics {
         this.player.rightHand.updateMatrixWorld();
       }
     };
-    _updateBowIkAnimation();
+
+    if (!this.player.isRemotePlayer) {
+      _updateBowIkAnimation();
+    }
   }
   update(now, timeDiffS) {
-    this.applyGravity(timeDiffS);
-    this.updateVelocity(timeDiffS);
-    this.applyAvatarPhysics(now, timeDiffS);
+    if (!this.player.isRemotePlayer) {
+      this.applyGravity(timeDiffS);
+      this.updateVelocity(timeDiffS);
+      this.applyAvatarPhysics(now, timeDiffS);
+    }
     this.applyAvatarActionKinematics(now, timeDiffS);
   }
   reset() {
