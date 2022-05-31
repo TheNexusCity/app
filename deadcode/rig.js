@@ -50,7 +50,7 @@ function applyPlayerActionsToAvatar(player, rig) {
   const danceAction = player.getAction('dance');
   const danceAnimation = danceAction ? danceAction.animation : '';
   const throwAction = player.getAction('throw');
-  const aimAction = player.getAction('aim');
+  const aimAction = player.getAction("aim");
   const crouchAction = player.getAction('crouch');
 
   rig.jumpState = !!jumpAction;
@@ -136,13 +136,13 @@ function applyPlayerTransformsToAvatar(player, session, rig) {
   } */
 }
 function applyPlayerModesToAvatar(player, session, rig) {
-  const aimAction = player.getAction('aim');
+  const aimAction = player.getAction("aim");
   const aimComponent = (() => {
     for (const action of player.getActionsState()) {
       if (action.type === 'wear') {
         const app = player.appManager.getAppByInstanceId(action.instanceId);
         for (const {key, value} of app.components) {
-          if (key === 'aim') {
+          if (key === "aim") {
             return value;
           }
         }

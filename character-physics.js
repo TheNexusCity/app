@@ -279,7 +279,7 @@ class CharacterPhysics {
         // this.velocity.y = 0;
       }
     } else { */
-      if (this.player.hasAction('firstperson') || (this.player.hasAction('aim') && !this.player.hasAction('narutoRun'))) {
+      if (this.player.hasAction('firstperson') || (this.player.hasAction("aim") && !this.player.hasAction('narutoRun'))) {
         this.applyAvatarPhysicsDetail(false, true, now, timeDiffS);
       } else {
         this.applyAvatarPhysicsDetail(true, true, now, timeDiffS);
@@ -289,7 +289,7 @@ class CharacterPhysics {
   applyAvatarActionKinematics(now, timeDiffS) {
     const renderer = getRenderer();
     const session = renderer.xr.getSession();
-    const aimAction = this.player.getAction('aim');
+    const aimAction = this.player.getAction("aim");
     const aimComponent = (() => {
       for (const action of this.player.getActions()) {
         if (action.type === 'wear') {
@@ -298,7 +298,7 @@ class CharacterPhysics {
             return null;
           }
           for (const {key, value} of app.components) {
-            if (key === 'aim') {
+            if (key === "aim") {
               return value;
             }
           }
