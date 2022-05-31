@@ -224,9 +224,9 @@ export default (app, component) => {
     if (bone) {
       bone.matrixWorld.decompose(app.position, app.quaternion, app.scale);
       if (Array.isArray(position)) {
-        app.position.add(
-          localVector.fromArray(position).applyQuaternion(app.quaternion)
-        );
+        // app.position.add(
+        //   localVector.fromArray(position).applyQuaternion(app.quaternion)
+        // );
       }
       if (Array.isArray(quaternion)) {
         app.quaternion.multiply(localQuaternion.fromArray(quaternion));
@@ -254,6 +254,7 @@ export default (app, component) => {
           ? animations.find((a) => a.name === appAimAction.appAnimation)
           : null;
         if (appAnimation && !appAimAnimationMixers) {
+          console.error('appAnimation', appAnimation)
           const clip = animations.find(
             (a) => a.name === appAimAction.appAnimation
           );

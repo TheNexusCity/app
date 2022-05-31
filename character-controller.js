@@ -1551,7 +1551,13 @@ class RemotePlayer extends InterpolatedPlayer {
       this.characterHups?.update(timestamp);
     }
   }
-  updatePhysics = () => {}; // LocalPlayer.prototype.updatePhysics;
+  // updatePhysics = () => {}; // LocalPlayer.prototype.updatePhysics;
+  updatePhysics(timestamp, timeDiff) {
+    if (this.avatar) {
+      const timeDiffS = timeDiff / 1000;
+      this.characterPhysics.update(timestamp, timeDiffS);
+    }
+  }
   getSession() {
     return null;
   }

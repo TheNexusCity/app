@@ -1503,6 +1503,7 @@ class GameManager extends EventTarget {
         quaternion,
         scale,
       };
+      console.error("menuAim", aimAction)
       localPlayer.addAction(aimAction);
     }
   }
@@ -1510,6 +1511,7 @@ class GameManager extends EventTarget {
     const localPlayer = metaversefileApi.useLocalPlayer();
     const aimAction = localPlayer.getAction("aim");
     if (aimAction) {
+      console.error("menuUnaim", aimAction)
       localPlayer.removeAction("aim");
     }
   }

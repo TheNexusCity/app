@@ -280,7 +280,8 @@ class CharacterPhysics {
       }
     } else { */
       if (this.player.hasAction('firstperson') || (this.player.hasAction("aim") && !this.player.hasAction('narutoRun'))) {
-        this.applyAvatarPhysicsDetail(false, true, now, timeDiffS);
+        console.error('applyAvatarPhysics', this.player)
+        // this.applyAvatarPhysicsDetail(false, true, now, timeDiffS);
       } else {
         this.applyAvatarPhysicsDetail(true, true, now, timeDiffS);
       }
@@ -444,9 +445,11 @@ class CharacterPhysics {
     _updateBowIkAnimation();
   }
   update(now, timeDiffS) {
-    this.applyGravity(timeDiffS);
-    this.updateVelocity(timeDiffS);
-    this.applyAvatarPhysics(now, timeDiffS);
+    if (!this.player.isRemotePlayer) {
+      this.applyGravity(timeDiffS);
+      this.updateVelocity(timeDiffS);
+      this.applyAvatarPhysics(now, timeDiffS);
+    }
     this.applyAvatarActionKinematics(now, timeDiffS);
   }
   reset() {
