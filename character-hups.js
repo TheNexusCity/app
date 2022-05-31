@@ -5,6 +5,7 @@ the HTML part of this code lives as part of the React app. */
 // import * as THREE from 'three';
 // import metaversefile from 'metaversefile';
 import {chatManager} from './chat-manager.js';
+import metaversefileApi from 'metaversefile';
 
 const deadTimeoutTime = 2000;
 
@@ -109,6 +110,60 @@ class CharacterHups extends EventTarget {
       const {action} = e;
       const {type, actionId} = action;
       // console.log('action add', action);
+
+      const remotePlayer = metaversefileApi.useRemotePlayer(action.playerId);
+      if(remotePlayer) {
+        remotePlayer.updateVoicer();
+        const remoteCharacterHups = remotePlayer.characterHups;
+        console.log("action add => remote hup", remoteCharacterHups, this)
+      }
+
+      // set remote player as a hup's parent player
+      if(action.playerId) {
+          const oldHup = this.hups.find(hup => hup.type === type);
+          // console.log('got old hup', oldHup, actionId, this.hups.map(h => h.actionIds).flat());
+          if (oldHup) {
+            oldHup.mergeAction(action);
+            oldHup.updateVoicer(action.message, action.emote);
+          } else if (Hup.isHupAction(action)) {
+            const newHup = new Hup(action.type, this);
+            newHup.mergeAction(action);
+            let pendingVoices = 0;
+            newHup.addEventListener('voicequeue', () => {
+              pendingVoices++;
+              newHup.clearDeadTimeout();
+            });
+            newHup.addEventListener('voiceend', () => {
+              if (--pendingVoices === 0) {
+                newHup.startDeadTimeout();
+              }
+            });
+            newHup.addEventListener('deadtimeout', () => {
+              newHup.destroy();
+    
+              const index = this.hups.indexOf(newHup);
+              this.hups.splice(index, 1);
+              
+              this.dispatchEvent(new MessageEvent('hupremove', {
+                data: {
+                  player,
+                  hup: newHup,
+                },
+              }));
+            });
+            this.hups.push(newHup);
+            this.dispatchEvent(new MessageEvent('hupadd', {
+              data: {
+                player,
+                hup: newHup,
+              },
+            }));
+            newHup.updateVoicer(action.message, action.emote);
+          }
+
+        return
+      }
+
 
       const oldHup = this.hups.find(hup => hup.type === type);
       // console.log('got old hup', oldHup, actionId, this.hups.map(h => h.actionIds).flat());

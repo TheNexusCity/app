@@ -108,14 +108,19 @@ world.connectRoom = async u => {
         console.log('chat handled', e);
         let { playerId, message } = e.data;
 
-        const player = metaversefileApi.useRemotePlayer(playerId);
         const localPlayer = metaversefileApi.useLocalPlayer();
+        if(localPlayer.playerId === playerId) {
+          console.log("Skipping chat for local player")
+          return; 
+        }
+        const player = metaversefileApi.useRemotePlayer(playerId);
         const chatId = makeId(5);
         localPlayer.addAction({
           type: 'chat',
           chatId,
           playerName: player.name,
-          message
+          message,
+          playerId: player.playerId
         })
 
       })
