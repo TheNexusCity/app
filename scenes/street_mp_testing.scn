@@ -7,6 +7,14 @@
         "args": [[255, 255, 255], 2]
       }
     },
+        {
+      "type": "application/light",
+      "content": {
+        "lightType": "directional",
+        "args": [[255, 255, 255], 2],
+        "position": [1, 2, 3]
+      }
+    },
     {
       "position": [
         0,
@@ -14,6 +22,22 @@
         0
       ],
       "start_url": "https://webaverse.github.io/street-base/"
+    },
+    {
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "start_url": "https://webaverse.github.io/street/index.js"
+    },
+    {
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "start_url": "https://webaverse.github.io/skybox-anime/"
     },
     {
       "position": [
@@ -54,10 +78,26 @@
       "start_url": "https://webaverse.github.io/silsword/"
     },
     {
-      "position": [
-        -2,
-        0.5,
+      "name": "hovercraft",
+      "description": "A fast way to get around the verse",
+      "start_url": "https://webaverse.github.io/hovercraft/",
+       "position": [
+        2,
+        0.25,
+        2
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
         1
+      ]
+    },
+    {
+      "position": [
+        2,
+        0.25,
+        2
       ],
       "quaternion": [
         0,
