@@ -151,6 +151,13 @@ class PlayerBase extends THREE.Object3D {
   constructor() {
     super();
 
+    // If these weren't set on constructor (which they aren't on remote player) then set them now
+    this.characterPhysics = new CharacterPhysics(this);
+    this.characterHups = new CharacterHups(this);
+    this.characterSfx = new CharacterSfx(this);
+    this.characterFx = new CharacterFx(this);
+    this.characterBehavior = new CharacterBehavior(this);
+
     this.leftHand = new PlayerHand();
     this.rightHand = new PlayerHand();
     this.hands = [this.leftHand, this.rightHand];
@@ -245,6 +252,17 @@ class PlayerBase extends THREE.Object3D {
     }
     return false;
   }
+  async setVoicePack({ audioUrl, indexUrl }) {
+    const self = this;
+    this.playersArray.doc.transact(function tx() {
+      const voiceSpec = JSON.stringify({audioUrl, indexUrl, endpointUrl: self.voiceEndpoint.url});
+      self.playerMap.set('voiceSpec', voiceSpec);
+    });
+    if(this.isLocalPlayer){
+      this.loadVoicePack({ audioUrl, indexUrl })
+    }
+  }
+
   async loadVoicePack({ audioUrl, indexUrl }) {
     this.voicePack = await VoicePack.load({
       audioUrl,
@@ -252,17 +270,41 @@ class PlayerBase extends THREE.Object3D {
     });
     this.updateVoicer();
   }
+
   setVoiceEndpoint(voiceId) {
-    if (voiceId) {
-      const url = `${voiceEndpoint}?voice=${encodeURIComponent(voiceId)}`;
+    console.log("setVoiceEndpoint")
+    const self = this;
+    const url = `${voiceEndpoint}?voice=${encodeURIComponent(voiceId)}`;
+    this.playersArray.doc.transact(function tx() {
+      let oldVoiceSpec = self.playerMap.get('voiceSpec');
+      if(oldVoiceSpec) {
+        oldVoiceSpec = JSON.parse(oldVoiceSpec);
+        const voiceSpec = JSON.stringify({audioUrl: oldVoiceSpec.audioUrl, indexUrl: oldVoiceSpec.indexUrl, endpointUrl: url});
+        console.log("Setting voiceSpec voiceEndpoint", voiceSpec);
+        self.playerMap.set('voiceSpec', voiceSpec);
+      } else {
+        const voiceSpec =  JSON.stringify({audioUrl: self.voicePack?.audioUrl, indexUrl: self.voicePack?.indexUrl, endpointUrl: url})
+        console.log("Setting voiceSpec voiceEndpoint", voiceSpec);
+        self.playerMap.set('voiceSpec', voiceSpec);
+      }
+    });
+    if(this.isLocalPlayer){
+      this.loadVoiceEndpoint(url)
+    }
+  }
+
+  loadVoiceEndpoint(url) {
+    if (url) {
       this.voiceEndpoint = new VoiceEndpoint(url);
     } else {
       this.voiceEndpoint = null;
     }
     this.updateVoicer();
   }
+
+
   getVoice() {
-    return this.voiceEndpoint || this.voicePack || null;
+    return this.voiceEndpoint || this.voicePack || console.warn("no voice endpoint set");
   }
   updateVoicer() {
     const voice = this.getVoice();
@@ -475,6 +517,7 @@ class PlayerBase extends THREE.Object3D {
 const controlActionTypes = ["jump", "crouch", "fly", "sit"];
 class StatePlayer extends PlayerBase {
   constructor({
+    name,
     playerId = makeId(5),
     playersArray = new Z.Doc().getArray(playersMapName),
   } = {}) {
@@ -482,6 +525,7 @@ class StatePlayer extends PlayerBase {
 
     this.playerId = playerId;
     this.playerIdInt = murmurhash3(playerId);
+    if(name) this.name = name;
 
     this.playersArray = null;
     this.playerMap = null;
@@ -525,7 +569,8 @@ class StatePlayer extends PlayerBase {
   bindCommonObservers() {
     const actions = this.getActionsState();
     let lastActions = actions.toJSON();
-    const observeActionsFn = () => {
+    const observeActionsFn = (e) => {
+      console.log("e is", e)
       const nextActions = Array.from(this.getActionsState());
       for (const nextAction of nextActions) {
         if (
@@ -533,11 +578,11 @@ class StatePlayer extends PlayerBase {
             (lastAction) => lastAction.actionId === nextAction.actionId
           )
         ) {
+          console.log("dispatching action", nextAction)
           this.dispatchEvent({
-            type: "actionadd",
+            type: 'actionadd',
             action: nextAction,
           });
-          // console.log('add action', nextAction);
         }
       }
       for (const lastAction of lastActions) {
@@ -547,7 +592,7 @@ class StatePlayer extends PlayerBase {
           )
         ) {
           this.dispatchEvent({
-            type: "actionremove",
+            type: 'actionremove',
             action: lastAction,
           });
           // console.log('remove action', lastAction);
@@ -600,7 +645,6 @@ class StatePlayer extends PlayerBase {
 
     // blindly add to new state
     this.playersArray = nextPlayersArray;
-    window.playersArray = this.playersArray;
     if (this.playersArray) {
       this.attachState(oldState);
       this.bindCommonObservers();
@@ -753,9 +797,11 @@ class StatePlayer extends PlayerBase {
     return this.isBound() ? Array.from(this.getAppsState()) : [];
   }
   addAction(action) {
+    console.log("Adding action", action, new Error().stack)
     action = clone(action);
     action.actionId = makeId(5);
     this.getActionsState().push([action]);
+    
     return action;
   }
   removeAction(type) {
@@ -1126,13 +1172,6 @@ class LocalPlayer extends UninterpolatedPlayer {
 
     this.name = defaultPlayerName;
     this.bio = defaultPlayerBio;
-    // If these weren't set on constructor (which they aren't on remote player) then set them now
-    this.characterPhysics = this.characterPhysics ?? new CharacterPhysics(this);
-    this.characterHups = this.characterHups ?? new CharacterHups(this);
-    this.characterSfx = this.characterSfx ?? new CharacterSfx(this);
-    this.characterFx = this.characterFx ?? new CharacterFx(this);
-    this.characterBehavior =
-      this.characterBehavior ?? new CharacterBehavior(this);
   }
   async setAvatarUrl(u) {
     const localAvatarEpoch = ++this.avatarEpoch;
@@ -1190,7 +1229,9 @@ class LocalPlayer extends UninterpolatedPlayer {
     this.playersArray.doc.transact(function tx() {
       self.playerMap = new Z.Map();
 
-      self.playerMap.set("playerId", self.playerId);
+      self.playerMap.set('playerId', self.playerId);
+      self.playerMap.set('name', self.name);
+      self.playerMap.set('bio', self.bio);
 
       // console.log('set player map', self.playerMap, self.playerMap?.toJSON(), self.playersArray?.toJSON());
 
@@ -1373,7 +1414,6 @@ class LocalPlayer extends UninterpolatedPlayer {
       applyPlayerToAvatar(this, session, this.avatar, mirrors);
 
       this.avatar.update(timestamp, timeDiff, true);
-      this.characterHups?.update(timestamp);
     }
     this.updateWearables();
   }
@@ -1452,14 +1492,6 @@ class RemotePlayer extends InterpolatedPlayer {
     this.audioWorkletNode = null;
 
     this.isRemotePlayer = true;
-
-    this.characterPhysics = new CharacterPhysics(this);
-    this.characterHups = new CharacterHups(this);
-    this.characterSfx = new CharacterSfx(this);
-    this.characterFx = new CharacterFx(this);
-    this.characterBehavior = new CharacterBehavior(this);
-
-    console.log("new remote plater", this);
   }
 
   audioWorkerLoaded = false;
@@ -1548,7 +1580,6 @@ class RemotePlayer extends InterpolatedPlayer {
       applyPlayerToAvatar(this, null, this.avatar, mirrors);
 
       this.avatar.update(timestamp, timeDiff, false);
-      this.characterHups?.update(timestamp);
     }
   }
   // updatePhysics = () => {}; // LocalPlayer.prototype.updatePhysics;
@@ -1566,7 +1597,7 @@ class RemotePlayer extends InterpolatedPlayer {
     let index = -1;
     for (let i = 0; i < this.playersArray.length; i++) {
       const player = this.playersArray.get(i, Z.Map);
-      if (player.get("playerId") === this.playerId) {
+      if (player.get('playerId') === this.playerId) {
         index = i;
         break;
       }
@@ -1590,14 +1621,30 @@ class RemotePlayer extends InterpolatedPlayer {
     // let prevApps = [];
 
     const observePlayerFn = (e) => {
-      if (e.changes.keys.get("playerId")) {
-        console.log("playerId is ", e.changes.keys.get("playerId"));
+      if (e.changes.keys.get('playerId')) {
+        console.log("playerId is ", e.changes.keys.get('playerId'));
+        this.playerId = e.changes.keys.get('playerId');
       }
 
-      if (e.changes.keys.get("avatar")) {
-        console.log("avatar is ", e.changes.keys.get("avatar"));
-        // TODO: Handle attaching the remote
+      if (e.changes.keys.get('voiceSpec') || e.added?.keys?.get('voiceSpec')) {
+        console.log("voiceSpec is ", e.changes.keys.get('voiceSpec'));
+        const voiceSpec = e.changes.keys.get('voiceSpec');
+        console.log("voiceSpec is", voiceSpec.value)
+        const json = JSON.parse(voiceSpec.value);
+        if(json.endpointUrl)
+          this.loadVoiceEndpoint(json.endpointUrl);
+        if(json.audioUrl && json.indexUrl)
+          this.loadVoicePack({ audioUrl: json.audioUrl, indexUrl: json.indexUrl});
       }
+
+      if (e.changes.keys.get('name')) {
+        console.log("name is ", e.changes.keys.get('name'));
+        this.name = e.changes.keys.get('name');
+      }
+
+      // if (e.changes.keys.get("avatar")) {
+      //   console.log("avatar is ", e.changes.keys.get("avatar"));
+      // }
 
       if (e.changes.keys.get("transform")) {
         const transform = this.playerMap.get("transform");
@@ -1698,11 +1745,6 @@ class StaticUninterpolatedPlayer extends PlayerBase {
   }
   addAction(action) {
     this.actions.push(action);
-
-    this.dispatchEvent({
-      type: "actionadd",
-      action,
-    });
   }
   removeAction(type) {
     for (let i = 0; i < this.actions.length; i++) {
@@ -1716,7 +1758,7 @@ class StaticUninterpolatedPlayer extends PlayerBase {
   removeActionIndex(index) {
     const action = this.actions.splice(index, 1)[0];
     this.dispatchEvent({
-      type: "actionremove",
+      type: 'actionremove',
       action,
     });
   }
@@ -1734,12 +1776,6 @@ class NpcPlayer extends StaticUninterpolatedPlayer {
 
     this.isNpcPlayer = true;
     this.avatarApp = null;
-
-    this.characterPhysics = new CharacterPhysics(this);
-    this.characterHups = new CharacterHups(this);
-    this.characterSfx = new CharacterSfx(this);
-    this.characterFx = new CharacterFx(this);
-    this.characterBehavior = new CharacterBehavior(this);
   }
   getAvatarApp() {
     return this.avatarApp;
@@ -1758,11 +1794,6 @@ class NpcPlayer extends StaticUninterpolatedPlayer {
     enableShadows(app);
 
     this.avatar = avatar;
-
-    this.characterPhysics = this.characterPhysics ?? new CharacterPhysics(this);
-    this.characterHups = this.characterHups ?? new CharacterHups(this);
-    this.characterSfx = this.characterSfx ?? new CharacterSfx(this);
-    this.characterFx = this.characterFx ?? new CharacterFx(this);
 
     this.avatarApp = app;
 

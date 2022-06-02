@@ -33,21 +33,22 @@ const CharacterHup = function(props) {
     if (canvasRef.current) {
       const canvas = canvasRef.current;
       const player = hup.parent.player;
-      let diorama = chatDioramas.get(player);
-      if (diorama) {
+      let {diorama, avatar} = chatDioramas.get(player) ?? {diorama: null, avatar: null};
+      if (diorama && player.avatar.model === avatar) {
         // console.log('got diorama', diorama);
         diorama.resetCanvases();
         diorama.addCanvas(canvas);
+        console.log("Using diorama for player", player)
       } else {
+        avatar = player.avatar.model;
         diorama = dioramaManager.createPlayerDiorama({
           target: player,
-          objects: [
-            player.avatar.model,
-          ],
+          objects: [avatar],
           grassBackground: true,
         });
         diorama.addCanvas(canvas);
-        chatDioramas.set(player, diorama);
+        chatDioramas.set(player, {diorama, avatar});
+        console.log("Creating new diorama for player", player)
         // console.log('no diorama');
       }
 
@@ -76,7 +77,7 @@ const CharacterHup = function(props) {
     }
   }, [hupRef, localOpen, hups, hups.length]);
   useEffect(() => {
-    // console.log('set full text', hup);
+    console.log('set full text', hup);
     setFullText(hup.fullText);
   }, []);
   useEffect(() => {
@@ -128,7 +129,7 @@ const CharacterHup = function(props) {
       <div className={styles.name}>
         <div className={styles.bar} />
         <h1>{hup.playerName}</h1>
-        <h2>Lv. 9</h2>
+        <h2>Lv. 11</h2>
         {/* <div className={styles.stats}>
           <div className={styles.stat}>
             <h3>HP</h3>
@@ -148,15 +149,17 @@ const CharacterHup = function(props) {
 export default function CharacterHups({
   localPlayer,
   npcs,
+  remotePlayers
 }) {
   const [hups, setHups] = useState([]);
 
   useEffect(() => {
     function hupadd(e) {
       const newHups = hups.concat([e.data.hup]);
-      // console.log('new hups', newHups);
+      console.log('new hups from jsx', newHups);
       setHups(newHups);
     }
+
     /* function hupremove(e) {
       const oldHup = e.data.hup;
       const index = hups.indexOf(oldHup);
@@ -171,6 +174,10 @@ export default function CharacterHups({
       // npcPlayer.characterHups.addEventListener('hupremove', hupremove);
     }
 
+    for (const remotePlayer of remotePlayers) {
+      remotePlayer.characterHups.addEventListener('hupadd', hupadd)
+    }
+
     return () => {
       localPlayer.characterHups.removeEventListener('hupadd', hupadd);
       // localPlayer.characterHups.removeEventListener('hupremove', hupremove);
@@ -178,8 +185,11 @@ export default function CharacterHups({
         npcPlayer.characterHups.removeEventListener('hupadd', hupadd);
         // npcPlayer.characterHups.removeEventListener('hupremove', hupremove);
       }
+      for (const remotePlayer of remotePlayers) {
+        remotePlayer.characterHups.removeEventListener('hupadd', hupadd)
+      }
     };
-  }, [localPlayer, npcs, npcs.length, hups, hups.length]);
+  }, [localPlayer, npcs, remotePlayers, hups]);
 
   return (
     <div className={styles['character-hups']}>

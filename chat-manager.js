@@ -31,26 +31,13 @@ class ChatManager extends EventTarget {
 
     this.voiceRunning = false;
     this.voiceQueue = [];
-
-    this.addEventListener('messageadd', async e => {
-      const wsrtc = world.getConnection();
-      const {player, message} = e.data;
-      wsrtc.sendChatMessage(message);
-    });
-
   }
-  addPlayerMessage(player, message = '', {timeout = 3000} = {}) {
-    const chatId = makeId(5);
-    const match = _getEmotion(message);
+  addPlayerMessage(player, m, {timeout = 3000} = {}) {
+    const match = _getEmotion(m.message);
     const emotion = match ? match.emotion : null;
     const value = emotion ? 1 : 0;
-    const m = {
-      type: 'chat',
-      chatId,
-      playerName: player.name,
-      message,
-    };
-    
+    console.log("Add player message player.name is", player.name)
+
     player.addAction(m);
     
     const _addFacePose = () => {
@@ -71,13 +58,6 @@ class ChatManager extends EventTarget {
         }
       }
     };
-    
-    this.dispatchEvent(new MessageEvent('messageadd', {
-      data: {
-        player,
-        message: m,
-      },
-    }));
 
     const localTimeout = setTimeout(() => {
       this.removePlayerMessage(player, m);
@@ -90,9 +70,19 @@ class ChatManager extends EventTarget {
     
     return m;
   }
-  addMessage(message, opts) {
+  addLocalPlayerMessage(message, opts) {
+    const chatId = makeId(5);
     const localPlayer = metaversefileApi.useLocalPlayer();
-    return this.addPlayerMessage(localPlayer, message, opts);
+
+    const m = {
+      type: 'chat',
+      chatId,
+      playerId: localPlayer.playerId,
+      playerName: localPlayer.name,
+      message,
+    };
+    
+    return this.addPlayerMessage(localPlayer, m, opts);
   }
   removePlayerMessage(player, m) {
     m.cleanup();
