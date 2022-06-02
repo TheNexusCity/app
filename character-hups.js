@@ -111,10 +111,11 @@ class CharacterHups extends EventTarget {
     player.addEventListener('actionadd', e => {
       const {action} = e;
       const {type, actionId} = action;
-      console.log('action add', new Error().stack, action, new Error().stack);
+      // console.log('action add', new Error().stack, action, new Error().stack);
 
       const oldHup = this.hups.find(hup => hup.type === type);
       console.log('got old hup', oldHup, actionId, this.hups.map(h => h.actionIds).flat());
+      console.log('hup player', this.player)
       if (oldHup) {
         oldHup.mergeAction(action);
         oldHup.updateVoicer(action.message, action.emote);
@@ -146,6 +147,7 @@ class CharacterHups extends EventTarget {
           }));
         });
         this.hups.push(newHup);
+        console.log("hupadd dispathc event", newHup)
         this.dispatchEvent(new MessageEvent('hupadd', {
           data: {
             player,
