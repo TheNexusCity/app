@@ -73,7 +73,9 @@ class ChatManager extends EventTarget {
   addLocalPlayerMessage(message, opts) {
     const chatId = makeId(5);
     const localPlayer = metaversefileApi.useLocalPlayer();
-
+    // reset remote player's voicer
+    localPlayer.dispatchEvent({type: "resetvoicer"});
+    
     const m = {
       type: 'chat',
       chatId,

@@ -10,15 +10,24 @@ import styles from './settings.module.css';
 
 import * as audioManager from '../../../../audio-manager.js';
 
+import {playersManager} from '../../../../players-manager.js';
+import metaversefile from '../../../../metaversefile-api.js'
 //
 
 export const defaultVoicePack = {
     name: `ShiShi voice pack`,
 };
+// const noneVoiceEndpoint = {
+//     name: 'None',
+//     drive_id: null,
+// };
+
 const noneVoiceEndpoint = {
-    name: 'None',
-    drive_id: null,
+    name: 'Applejack',
+    drive_id: '1kpEjZ3YqMN3chKSXODOqayEm581rxj4r',
 };
+
+
 const DefaultSettings = {
     general:        100,
     music:          100,
@@ -43,6 +52,7 @@ export const TabAudio = ({ active }) => {
     const [ effectsVolume, setEffectsVolume ] = useState( null );
     const [ voicePack, setVoicePack ] = useState( '' );
     const [ voiceEndpoint, setVoiceEndpoint ] = useState( '' );
+    const localPlayer = metaversefile.useLocalPlayer();
 
     //
 
@@ -77,13 +87,13 @@ export const TabAudio = ({ active }) => {
         }
 
         settings = settings ?? DefaultSettings;
-
+        
         setGeneralVolume( settings.general ?? DefaultSettings.general );
         setMusicVolume( settings.music ?? DefaultSettings.music );
         setVoiceVolume( settings.voice ?? DefaultSettings.voice );
         setEffectsVolume( settings.effects ?? DefaultSettings.effects );
-        setVoicePack( settings.voicePack ?? DefaultSettings.voicePack );
-        setVoiceEndpoint( settings.voiceEndpoint ?? DefaultSettings.voiceEndpoint );
+        setVoicePack( settings.voicePack ? settings.voicePack : DefaultSettings.voicePack );
+        setVoiceEndpoint( settings.voiceEndpoint ? settings.voiceEndpoint: DefaultSettings.voiceEndpoint );
 
         setSettingsLoaded( true );
 
@@ -98,12 +108,15 @@ export const TabAudio = ({ active }) => {
         // set voice pack
 
         const vp = voicePacks[ voicePacks.map( ( vp ) => { return vp.name; } ).indexOf( voicePack ) ];
+        console.log("voice pack", voicePacks, voicePack, vp)
         if ( vp ) {
 
             const { audioPath, indexPath } = vp;
             const voicePacksUrlBase = voicePacksUrl.replace( /\/+[^\/]+$/, '' );
             const audioUrl = voicePacksUrlBase + audioPath;
             const indexUrl = voicePacksUrlBase + indexPath;
+
+            console.info("voice pack audio url", audioUrl);
 
             (async () => {
 
@@ -121,10 +134,11 @@ export const TabAudio = ({ active }) => {
         }
 
         // set voice endpoint
+        console.log("voiceEndpoints", voiceEndpoints)
 
         const ve = voiceEndpoints[ voiceEndpoints.map( ( vp ) => { return vp.name; } ).indexOf( voiceEndpoint ) ];
         if ( ve ) {
-
+            console.log("ve", ve.name, ve.drive_id)
             game.setVoiceEndpoint( ve.drive_id );
 
         }
@@ -191,7 +205,19 @@ export const TabAudio = ({ active }) => {
 
     }, [] );
 
-    //
+
+    useEffect( () => {
+
+        localPlayer.addEventListener('resetvoicer', e => {
+            if(voicePacks && voiceEndpoints && voicePack) {
+                console.log("audio component wearupdate handle", voicePacks, voiceEndpoint)
+                applySettings();
+            }
+        });
+        
+    }, [voicePacks, voiceEndpoints, voicePack]);
+
+    
 
     return (
         <div className={ classNames( styles.audioTab, styles.tabContent, active ? styles.active : null ) }>

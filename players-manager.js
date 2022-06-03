@@ -9,6 +9,8 @@ import { RemotePlayer } from './character-controller.js';
 import {localPlayer} from './players.js';
 import metaversefileApi from 'metaversefile';
 
+import { AppManager } from "./app-manager.js";
+
 Error.stackTraceLimit = 300;
 window.localPlayer = localPlayer;
 
@@ -92,6 +94,10 @@ class PlayersManager {
             });
             this.remotePlayers.set(playerId, remotePlayer);
             this.remotePlayersByInteger.set(remotePlayer.playerIdInt, remotePlayer);
+
+            // reset remote player's voicer
+            localPlayer.dispatchEvent({type: "resetvoicer"});
+
           }
         }
         // console.log('players observe', added, deleted);
@@ -111,6 +117,7 @@ class PlayersManager {
             remotePlayer.destroy();
           }
         }
+
       };
       this.playersArray.observe(playersObserveFn);
       this.unbindStateFn = this.playersArray.unobserve.bind(
