@@ -7,14 +7,6 @@
         "args": [[255, 255, 255], 2]
       }
     },
-        {
-      "type": "application/light",
-      "content": {
-        "lightType": "directional",
-        "args": [[255, 255, 255], 2],
-        "position": [1, 2, 3]
-      }
-    },
     {
       "position": [
         0,
@@ -22,22 +14,6 @@
         0
       ],
       "start_url": "https://webaverse.github.io/street-base/"
-    },
-    {
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "start_url": "https://webaverse.github.io/street/index.js"
-    },
-    {
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "start_url": "https://webaverse.github.io/skybox-anime/"
     },
     {
       "position": [
@@ -79,9 +55,9 @@
     },
     {
       "position": [
-        2,
-        0.25,
-        2
+        -2,
+        0.5,
+        1
       ],
       "quaternion": [
         0,
@@ -89,7 +65,28 @@
         0,
         1
       ],
-      "start_url": "https://webaverse.github.io/hovercraft/"
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "name": "pistol",
+      "description": "A ranged weapon",
+      "start_url": "https://raw.githack.com/thenexuscity/pistol/109af8410cb8b94752d2f99a69e02eaef858546c/index.js",
+      "components": [
+      {
+        "key": "aim",
+        "value": {
+          "ikHand": "right"
+        }
+      },
+      {
+        "key": "use",
+        "value": {
+          "ik": "pistol"
+        }
+      }
+    ]
     }
   ]
 }
