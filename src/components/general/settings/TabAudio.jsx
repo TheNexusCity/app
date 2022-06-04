@@ -9,6 +9,7 @@ import * as voices from '../../../../voices';
 import styles from './settings.module.css';
 
 import * as audioManager from '../../../../audio-manager.js';
+import metaversefile from '../../../../metaversefile-api.js'
 
 //
 
@@ -28,6 +29,15 @@ const DefaultSettings = {
     voiceEndpoint:  noneVoiceEndpoint.name,
 };
 
+const avatarVoicer = {
+    scillia_drophunter_v15_vian: 'Scillia voice pack',
+    Drake_hacker_v8_Guilty: 'Drake voice pack',
+    hya_influencer_v2_vian: 'Bryce voice pack',
+    jun_engineer_v1_vian: 'Andrew voice pack',
+    ann: 'ShiShi voice pack'
+}
+
+
 export const TabAudio = ({ active }) => {
 
     const [ appyingChanges, setAppyingChanges ] = useState( false );
@@ -43,6 +53,9 @@ export const TabAudio = ({ active }) => {
     const [ effectsVolume, setEffectsVolume ] = useState( null );
     const [ voicePack, setVoicePack ] = useState( '' );
     const [ voiceEndpoint, setVoiceEndpoint ] = useState( '' );
+
+
+    const localPlayer = metaversefile.useLocalPlayer();
 
     //
 
@@ -190,6 +203,23 @@ export const TabAudio = ({ active }) => {
         loadSettings();
 
     }, [] );
+
+    useEffect( () => {
+
+        localPlayer.addEventListener('avatarchange', e => {
+
+            const avatarApp = e.app;
+            let newVoicePack;
+            if(avatarApp.avatar) {
+                const avatarVoicePack = avatarVoicer[avatarApp.name];
+                console.log("changed avatar", e.app.name, avatarVoicePack);
+                setVoicePack(avatarVoicePack);
+                setTimeout( applySettings, 100 );
+            }
+
+        });
+
+    }, [voicePacks, voiceEndpoint]);
 
     //
 

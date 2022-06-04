@@ -226,6 +226,7 @@ export const CharacterSelect = () => {
 
             (async () => {
                 const localPlayer = await metaversefile.useLocalPlayer();
+                console.log("character selected", character)
                 await localPlayer.setAvatarUrl(character.avatarUrl);
             })();
 
