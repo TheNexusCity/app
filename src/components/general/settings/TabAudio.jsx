@@ -108,7 +108,6 @@ export const TabAudio = ({ active }) => {
         // set voice pack
 
         const vp = voicePacks[ voicePacks.map( ( vp ) => { return vp.name; } ).indexOf( voicePack ) ];
-        console.log("voice pack", voicePacks, voicePack, vp)
         if ( vp ) {
 
             const { audioPath, indexPath } = vp;
@@ -134,11 +133,9 @@ export const TabAudio = ({ active }) => {
         }
 
         // set voice endpoint
-        console.log("voiceEndpoints", voiceEndpoints)
 
         const ve = voiceEndpoints[ voiceEndpoints.map( ( vp ) => { return vp.name; } ).indexOf( voiceEndpoint ) ];
         if ( ve ) {
-            console.log("ve", ve.name, ve.drive_id)
             game.setVoiceEndpoint( ve.drive_id );
 
         }
@@ -210,7 +207,6 @@ export const TabAudio = ({ active }) => {
 
         localPlayer.addEventListener('resetvoicer', e => {
             if(voicePacks && voiceEndpoints && voicePack) {
-                console.log("audio component wearupdate handle", voicePacks, voiceEndpoint)
                 applySettings();
             }
         });
