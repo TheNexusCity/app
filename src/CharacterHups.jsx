@@ -35,10 +35,13 @@ const CharacterHup = function(props) {
       const player = hup.parent.player;
       let diorama = chatDioramas.get(player);
       if (diorama) {
+        let {diorama, avatar} = chatDioramas.get(player) ?? {diorama: null, avatar: null};
+        if (diorama && player.avatar.model === avatar) {
         // console.log('got diorama', diorama);
         diorama.resetCanvases();
         diorama.addCanvas(canvas);
       } else {
+        avatar = player.avatar.model;
         diorama = dioramaManager.createPlayerDiorama({
           target: player,
           objects: [
@@ -47,7 +50,7 @@ const CharacterHup = function(props) {
           grassBackground: true,
         });
         diorama.addCanvas(canvas);
-        chatDioramas.set(player, diorama);
+        chatDioramas.set(player, {diorama, avatar});
         // console.log('no diorama');
       }
 
