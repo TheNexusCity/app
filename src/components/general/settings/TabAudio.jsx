@@ -9,20 +9,17 @@ import * as voices from '../../../../voices';
 import styles from './settings.module.css';
 
 import * as audioManager from '../../../../audio-manager.js';
-
-import {playersManager} from '../../../../players-manager.js';
 import metaversefile from '../../../../metaversefile-api.js'
 //
 
 export const defaultVoicePack = {
     name: `ShiShi voice pack`,
 };
-// const noneVoiceEndpoint = {
-//     name: 'None',
-//     drive_id: null,
-// };
-
 const noneVoiceEndpoint = {
+    name: 'None',
+    drive_id: null,
+};
+const defaultVoiceEndpoint = {
     name: 'Applejack',
     drive_id: '1kpEjZ3YqMN3chKSXODOqayEm581rxj4r',
 };
@@ -34,7 +31,7 @@ const DefaultSettings = {
     voice:          100,
     effects:        100,
     voicePack:      defaultVoicePack.name,
-    voiceEndpoint:  noneVoiceEndpoint.name,
+    voiceEndpoint:  defaultVoiceEndpoint.name,
 };
 
 export const TabAudio = ({ active }) => {
