@@ -1376,13 +1376,24 @@ class LocalPlayer extends UninterpolatedPlayer {
         packed[i + 2] = v.z;
         packed[i + 3] = v.w;
       };
-
+      
       pack3(this.position, 0);
       pack4(this.quaternion, 3);
       pack3(this.scale, 7);
       packed[10] = timeDiff;
 
       this.playerMap.set("transform", packed);
+      
+      if (this.avatar && this.hands[0].enabled) {
+        const packed = this.packed;
+        pack3(this.position, 0);
+        pack4(this.quaternion, 3);
+        this.playerMap.set("lefthand", packed)
+      } else {
+        if (this.playerMap.has("lefthand")) {
+          this.playerMap.delete("lefthand")
+        }
+      }
     }, "push");
 
     // this.appManager.updatePhysics();
@@ -1589,6 +1600,7 @@ class RemotePlayer extends InterpolatedPlayer {
       this.characterPhysics.update(timestamp, timeDiffS);
     }
   }
+
   getSession() {
     return null;
   }
@@ -1675,6 +1687,19 @@ class RemotePlayer extends InterpolatedPlayer {
           }
         }
       }
+
+      if (e.changes.keys.get("lefthand")) {
+        const transform = this.playerMap.get("lefthand");
+        if (transform && this.avatar) {
+          // this.avatar.poseManager.vrTransforms.leftHand.position.fromArray(transform, 0)
+          // this.avatar.poseManager.vrTransforms.leftHand.quaternion.fromArray(transform, 3)
+          // this.hands[0].position.fromArray(transform, 0)
+          // this.hands[0].quaternion.fromArray(transform, 3)
+        }
+      } else {
+        this.hands[0].enabled = false
+      }
+
 
       this.updateWearables();
     };

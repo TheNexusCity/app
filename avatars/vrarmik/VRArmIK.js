@@ -126,15 +126,15 @@ const FINGER_SPECS = [
       const elbowPosition = localVector4.copy(upperArmPosition).add(handPosition).divideScalar(2)
         .add(localVector5.copy(offsetDirection).multiplyScalar(offsetDistance));
       const upVector = localVector5.set(this.left ? -1 : 1, 0, 0).applyQuaternion(shoulderRotation);
-      this.arm.upperArm.quaternion.setFromRotationMatrix(
-      	localMatrix.lookAt(
-	      	zeroVector,
-	      	localVector6.copy(elbowPosition).sub(upperArmPosition),
-	      	upVector
-	      )
-      )
-        .multiply(this.left ? rightRotation : leftRotation)
-        .premultiply(Helpers.getWorldQuaternion(this.arm.upperArm.parent, localQuaternion3).invert());
+      // this.arm.upperArm.quaternion.setFromRotationMatrix(
+      // 	localMatrix.lookAt(
+	    //   	zeroVector,
+	    //   	localVector6.copy(elbowPosition).sub(upperArmPosition),
+	    //   	upVector
+	    //   )
+      // )
+      //   .multiply(this.left ? rightRotation : leftRotation)
+      //   .premultiply(Helpers.getWorldQuaternion(this.arm.upperArm.parent, localQuaternion3).invert());
       Helpers.updateMatrixMatrixWorld(this.arm.upperArm);
 
       // this.arm.lowerArm.position = elbowPosition;

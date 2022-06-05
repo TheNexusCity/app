@@ -1448,7 +1448,7 @@ class Avatar {
         this.shoulderTransforms.nonIKRightArm[key].quaternion.copy(this.shoulderTransforms.rightArm[key].quaternion);
       }
     }
-
+    
     this.shoulderTransforms.Update();
 
     if (this.shoulderTransforms.handsEnabled[0]) {
