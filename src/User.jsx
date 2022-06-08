@@ -114,23 +114,23 @@ export const User = ({ setLoginFrom }) => {
         //
 
         const discordAutoLogin = async () => {
-            console.warn("Skipping discord auto login")
-            // const { address, error } = await WebaWallet.loginDiscord( code, id );
+            // console.warn("Skipping discord auto login")
+            const { address, error } = await WebaWallet.loginDiscord( code, id );
 
-            // if ( address ) {
+            if ( address ) {
 
-            //     // setAddress( address );
-            //     setLoginFrom( 'discord' );
-            //     // setShow( false );
+                // setAddress( address );
+                setLoginFrom( 'discord' );
+                // setShow( false );
 
-            // } else if ( error ) {
+            } else if ( error ) {
 
-            //     setLoginError( String( error ).toLocaleUpperCase() );
+                setLoginError( String( error ).toLocaleUpperCase() );
 
-            // }
+            }
 
-            // window.history.pushState( {}, '', window.location.origin );
-            // setLoggingIn( false );
+            window.history.pushState( {}, '', window.location.origin );
+            setLoggingIn( false );
 
         };
 
@@ -285,7 +285,7 @@ export const User = ({ setLoginFrom }) => {
                     <img src="images/metamask.png" alt="metamask" width="28px" />
                     <span className={ styles.methodBtnText } >MetaMask</span>
                 </div>
-                {/* <a
+                <a
                     href={ `https://discord.com/api/oauth2/authorize?client_id=${ discordClientId }&redirect_uri=${ window.location.origin }%2Flogin&response_type=code&scope=identify` }
                     onMouseEnter={ _triggerClickSound }
                 >
@@ -293,7 +293,7 @@ export const User = ({ setLoginFrom }) => {
                         <img src="images/discord.png" alt="discord" width="28px" />
                         <span className={ styles.methodBtnText } >Discord</span>
                     </div>
-                </a> */}
+                </a>
                 <div className={ styles.methodBtn } onClick={ handleCancelBtnClick } onMouseEnter={ _triggerClickSound } >
                     <span className={ styles.methodBtnText } >Cancel</span>
                 </div>

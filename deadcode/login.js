@@ -8,7 +8,7 @@ import Web3 from './web3.min.js';
 import bip39 from './bip39.js';
 import hdkeySpec from './hdkey.js';
 const hdkey = hdkeySpec.default;
-import {web3, contracts, getAddressFromMnemonic, runSidechainTransaction} from './blockchain.js';
+import {web3, contracts, getAddressFromMnemonic, runSidechainTransaction} from '../blockchain.js';
 import {otherChainName} from './constants.js';
 import * as notifications from './notifications.js';
 import {jsonParse} from './util.js';
