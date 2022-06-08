@@ -67,7 +67,7 @@ class VoiceEndpointVoicer {
         audioBufferSourceNode.addEventListener('ended', () => {
           this.cancel = null;
           this.running = false;
-
+          console.log("buffer end", this.live)
           if (this.live) {
             if (this.queue.length > 0) {
               const text = this.queue.shift();
@@ -79,16 +79,33 @@ class VoiceEndpointVoicer {
             }
           }
         }, {once: true});
-        audioBufferSourceNode.connect(this.player.avatar.getAudioInput());
-        audioBufferSourceNode.start();
 
-        this.cancel = () => {
-          audioBufferSourceNode.stop();
-          audioBufferSourceNode.disconnect();
+        try {
+          audioBufferSourceNode.connect(this.player.avatar.getAudioInput());
+          audioBufferSourceNode.start();
 
-          this.cancel = null;
-        };
+          this.cancel = () => {
+            audioBufferSourceNode.stop();
+            audioBufferSourceNode.disconnect();
+            this.cancel = null;
+          };
+
+        } catch (error) {
+          console.log("Voiceendpoint voicer error", error)
+          
+          if (this.cancel) {
+            this.cancel();
+            this.cancel = null;
+          }
+          this.running = false;
+      
+          const {endPromise} = this;
+          this.endPromise = null;
+          endPromise.accept();
+        }
+
       })();
+
     } else {
       this.queue.push(text);
     }

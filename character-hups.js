@@ -166,6 +166,27 @@ class CharacterHups extends EventTarget {
         oldHup.unmergeAction(action);
       }
     });
+
+    /* Force close houp when  player change the avatar while chatting. */
+    // player.addEventListener('avatarchange', e => {
+    //   const chatHup = this.hups.find(hup => hup.type === 'chat');
+    //   if(chatHup) {
+    //     console.log("hup remove since avatar change")
+    //     chatHup.parent.player.voicer.stop();
+
+    //     const index = this.hups.indexOf(chatHup);
+    //     this.hups.splice(index, 1);
+    //     chatHup.destroy();
+        
+    //     chatManager.voiceRunning = false;
+    //     chatHup.dispatchEvent(new MessageEvent('voiceend', {
+    //       data: {
+    //         fullText: this.fullText,
+    //       },
+    //     }));
+    //   }
+    // });
+
   }
   destroy() {
     // nothing
