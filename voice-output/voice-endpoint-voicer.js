@@ -53,8 +53,7 @@ class VoiceEndpointVoicer {
       return audioBuffer;
     } catch(err) {
       console.error('Failed to load the audio buffer', err);
-      const res = new ArrayBuffer()
-      return res;
+      return new ArrayBuffer()
     }
   }
   /* async loadAudioBuffer(text) {

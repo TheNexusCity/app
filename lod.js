@@ -87,7 +87,6 @@ export class LodChunkTracker extends EventTarget {
 
     // if we moved across a chunk boundary, update needed chunks
     if (!currentCoord.equals(this.lastUpdateCoord)) {
-      // dispatch event
       this.dispatchEvent(new MessageEvent('coordupdate', {
         data: {
           coord: currentCoord,

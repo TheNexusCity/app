@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import {mod} from './util.js';
-import {avatarInterpolationFrameRate, avatarInterpolationNumFrames} from './constants.js';
 
 export class ScalarInterpolant {
   constructor(fn, minValue, maxValue) {
@@ -9,12 +8,15 @@ export class ScalarInterpolant {
     this.minValue = minValue;
     this.maxValue = maxValue;
   }
+
   get() {
     return this.value;
   }
+
   getNormalized() {
     return this.value / (this.maxValue - this.minValue);
   }
+
   getInverse() {
     return this.maxValue - this.value;
   }
@@ -25,6 +27,7 @@ export class BiActionInterpolant extends ScalarInterpolant {
   constructor(fn, minValue, maxValue) {
     super(fn, minValue, maxValue);
   }
+
   update(timeDiff) {
     this.value += (this.fn() ? 1 : -1) * timeDiff;
     this.value = Math.min(Math.max(this.value, this.minValue), this.maxValue);
@@ -36,6 +39,7 @@ export class UniActionInterpolant extends ScalarInterpolant {
   constructor(fn, minValue, maxValue) {
     super(fn, minValue, maxValue);
   }
+
   update(timeDiff) {
     if (this.fn()) {
       this.value += timeDiff;
@@ -51,6 +55,7 @@ export class InfiniteActionInterpolant extends ScalarInterpolant {
   constructor(fn, minValue) {
     super(fn, minValue, Infinity);
   }
+
   update(timeDiff) {
     if (this.fn()) {
       this.value += timeDiff;
@@ -65,8 +70,6 @@ const _makeSnapshots = (constructor, numFrames) => {
   for (let i = 0; i < numFrames; i++) {
     result[i] = {
       startValue: constructor(),
-      // endValue: constructor(),
-      // startTime: 0,
       endTime: 0,
     };
   }
@@ -80,18 +83,18 @@ export class SnapshotInterpolant {
     this.numFrames = numFrames;
     this.readFn = readFn;
     this.seekFn = seekFn;
-    
+
     this.readTime = 0;
-    // this.writeTime = 0;
 
     this.snapshots = _makeSnapshots(constructor, numFrames);
     this.snapshotWriteIndex = 0;
 
     this.value = constructor();
   }
+
   update(timeDiff) {
     this.readTime += timeDiff;
-    
+
     let minEndTime = Infinity;
     let maxEndTime = -Infinity;
     for (let i = 0; i < this.numFrames; i++) {
@@ -103,21 +106,18 @@ export class SnapshotInterpolant {
         maxEndTime = snapshot.endTime;
       }
     }
-    // minEndTime -= 1000 / avatarInterpolationFrameRate * avatarInterpolationNumFrames;
 
-    if (maxEndTime > 0) { // if we had at least one snapshot
-      if (
-        (this.readTime - this.timeDelay) < minEndTime ||
-        (this.readTime - this.timeDelay) > maxEndTime
-      ) {
-        this.readTime = maxEndTime;
-      }
-
-      let effectiveReadTime = this.readTime - this.timeDelay;
-
-      this.seekTo(effectiveReadTime);
+    if (maxEndTime <= 0) return; // if we had at least one snapshot
+    const interval = this.readTime - this.timeDelay;
+    if ((interval) < minEndTime || (interval) > maxEndTime) {
+      this.readTime = maxEndTime;
     }
+
+    const effectiveReadTime = this.readTime - this.timeDelay;
+
+    this.seekTo(effectiveReadTime);
   }
+
   seekTo(t) {
     for (let i = -(this.numFrames - 1); i < 0; i++) {
       const index = this.snapshotWriteIndex + i;
@@ -138,18 +138,20 @@ export class SnapshotInterpolant {
     }
     console.warn('could not seek to time', t, JSON.parse(JSON.stringify(this.snapshots)));
   }
+
   snapshot(timeDiff) {
     const value = this.fn();
     const writeSnapshot = this.snapshots[this.snapshotWriteIndex];
-    
+
     const lastWriteSnapshot = this.snapshots[mod(this.snapshotWriteIndex - 1, this.numFrames)];
     const startTime = lastWriteSnapshot.endTime;
-    
+
     writeSnapshot.startValue = this.readFn(writeSnapshot.startValue, value);
     writeSnapshot.endTime = startTime + timeDiff;
-    
+
     this.snapshotWriteIndex = mod(this.snapshotWriteIndex + 1, this.numFrames);
   }
+
   get() {
     return this.value;
   }
@@ -194,19 +196,3 @@ export class QuaternionInterpolant extends SnapshotInterpolant {
     super(fn, timeDelay, numFrames, () => new THREE.Quaternion(), (target, value) => target.fromArray(value), (target, src, dst, f) => target.copy(src).slerp(dst, f));
   }
 }
-
-/* // allows ticking at a fixed rate regardless of frame rate
-export class FixedTimeStep {
-  constructor(fn, frameRate) {
-    this.fn = fn;
-    this.maxTime = 1000/frameRate;
-    this.timeAcc = this.maxTime;
-  }
-  update(timeDiff) {
-    this.timeAcc += timeDiff;
-    while (this.timeAcc > this.maxTime) {
-      this.fn(this.maxTime);
-      this.timeAcc -= this.maxTime;
-    }
-  }
-} */

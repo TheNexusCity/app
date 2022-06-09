@@ -10,7 +10,6 @@ import WSRTC from 'wsrtc/wsrtc.js';
 import hpManager from './hp-manager.js';
 // import {rigManager} from './rig.js';
 import {AppManager} from './app-manager.js';
-import {chatManager} from './chat-manager.js';
 // import {getState, setState} from './state.js';
 // import {makeId} from './util.js';
 import {scene, sceneHighPriority, sceneLowPriority, sceneLowerPriority, sceneLowestPriority} from './renderer.js';
@@ -29,7 +28,9 @@ import {getLocalPlayer} from './players.js';
 export const world = {};
 world.winds = [];
 
-const appManager = new AppManager();
+const appManager = new AppManager({
+  appsMap: null,
+});
 world.appManager = appManager;
 
 // world.particleSystem = createParticleSystem();
@@ -60,32 +61,25 @@ world.connectState = state => {
   world.appManager.unbindStateLocal();
   world.appManager.clear();
   world.appManager.bindStateLocal(state.getArray(appsMapName));
-  
+
   playersManager.bindState(state.getArray(playersMapName));
-  
+
   const localPlayer = getLocalPlayer();
   localPlayer.bindState(state.getArray(playersMapName));
-  
+
   // note: here we should load up the apps in the state since it won't happen automatically.
   // until we implement that, only fresh state is supported...
 };
 world.isConnected = () => !!wsrtc;
 world.connectRoom = async u => {
   // await WSRTC.waitForReady();
-  
+
   const localPlayer = getLocalPlayer();
 
   world.appManager.unbindState();
   world.appManager.clear();
 
   const state = new Z.Doc();
-  
-  document.addEventListener('keydown', event => {
-    if (event.key === 'Escape') {
-      console.log(state.getArray('world'))
-      console.log(state.getArray('players'))
-    }
-  });
 
   state.setResolvePriority(1);
   wsrtc = new WSRTC(u, {
@@ -95,19 +89,19 @@ world.connectRoom = async u => {
 
   const open = e => {
     wsrtc.removeEventListener('open', open);
-    
+
     world.appManager.bindState(state.getArray(appsMapName));
     playersManager.bindState(state.getArray(playersMapName));
 
     const init = e => {
       wsrtc.removeEventListener('init', init);
-      
+
       localPlayer.bindState(state.getArray(playersMapName));
 
       wsrtc.addEventListener('audio', e => {
         const player = playersManager.remotePlayersByInteger.get(e.data.playerId);
         player.processAudioData(e.data);
-      })
+      });
     };
     wsrtc.addEventListener('init', init);
   };
@@ -118,7 +112,7 @@ world.connectRoom = async u => {
     if (rig) {
       const {hmd, leftGamepad, rightGamepad} = rig.inputs;
       const user = wsrtc.localUser;
-      
+
       hmd.position.toArray(user.pose.position);
       hmd.quaternion.toArray(user.pose.quaternion);
       leftGamepad.position.toArray(extra.leftGamepadPosition);
@@ -211,7 +205,7 @@ world.connectRoom = async u => {
 
   /* wsrtc.addEventListener('join', async e => {
     const player = e.data;
-  
+
     player.audioNode.connect(WSRTC.getAudioContext().destination);
 
     let joined = true;
@@ -328,15 +322,18 @@ appManager.addEventListener('appadd', e => {
   _bindHitTracker(app);
 });
 
-// appManager.addEventListener('trackedappexport', async e => {
-//   const {app} = e.data;
-//   app.hitTracker.unbind();
-// });
+// TODO: Verify these are working properly
+appManager.addEventListener('trackedappexport', async e => {
+  const {app} = e.data;
+  console.log('unbinding hit tracker on ', app);
+  app.hitTracker.unbind();
+});
 
-// appManager.addEventListener('trackedappimport', async e => {
-//   const {app} = e.data;
-//   _bindHitTracker(app);
-// });
+appManager.addEventListener('trackedappimport', async e => {
+  const {app} = e.data;
+  console.log('binding hit tracker on ', app);
+  _bindHitTracker(app);
+});
 
 appManager.addEventListener('appremove', async e => {
   const app = e.data;

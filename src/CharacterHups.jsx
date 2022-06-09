@@ -33,12 +33,12 @@ const CharacterHup = function(props) {
     if (canvasRef.current) {
       const canvas = canvasRef.current;
       const player = hup.parent.player;
-      let {diorama, avatar} = chatDioramas.get(player) ?? {diorama: null, avatar: null};
-      if (diorama && player.avatar.model === avatar) {
+      const res = chatDioramas.get(player);
+      let {diorama, avatar} = res ?? {diorama: null, avatar: null};
+      if (res && diorama && player.avatar.model === avatar) {
         // console.log('got diorama', diorama);
         diorama.resetCanvases();
         diorama.addCanvas(canvas);
-        console.log("Using diorama for player", player)
       } else {
         avatar = player.avatar.model;
         diorama = dioramaManager.createPlayerDiorama({
@@ -48,7 +48,7 @@ const CharacterHup = function(props) {
         });
         diorama.addCanvas(canvas);
         chatDioramas.set(player, {diorama, avatar});
-        console.log("Creating new diorama for player", player)
+        console.log('Creating new diorama for player', player);
         // console.log('no diorama');
       }
 
@@ -68,7 +68,7 @@ const CharacterHup = function(props) {
           newHups.splice(hupIndex, 1);
           setHups(newHups);
         }
-      };
+      }
       hupEl.addEventListener('transitionend', transitionend);
 
       return () => {
@@ -77,13 +77,13 @@ const CharacterHup = function(props) {
     }
   }, [hupRef, localOpen, hups, hups.length]);
   useEffect(() => {
-    console.log('set full text', hup);
+    // console.log('set full text', hup);
     setFullText(hup.fullText);
   }, []);
   useEffect(() => {
     // console.log('effect 3', hup);
     function voicestart(e) {
-      console.log('voice start', hup.fullText, e.data, e.data.fullText);
+      // console.log('voice start', hup.fullText, e.data, e.data.fullText);
       setLocalOpen(true);
       setFullText(e.data.fullText);
     }
@@ -115,21 +115,21 @@ const CharacterHup = function(props) {
 
   return (
     <div
-      className={classnames(styles['character-hup'], localOpen ? styles['open'] : null)}
+      className={classnames(styles['character-hup'], localOpen ? styles.open : null)}
       style={{
         top: `${index * defaultHupSize}px`,
       }}
       ref={hupRef}
     >
       <canvas
-        width={defaultHupSize*pixelRatio}
-        height={defaultHupSize*pixelRatio}
+        width={defaultHupSize * pixelRatio}
+        height={defaultHupSize * pixelRatio}
         ref={canvasRef}
       />
       <div className={styles.name}>
         <div className={styles.bar} />
         <h1>{hup.playerName}</h1>
-        <h2>Lv. 11</h2>
+        <h2>Lv. 9</h2>
         {/* <div className={styles.stats}>
           <div className={styles.stat}>
             <h3>HP</h3>
@@ -149,17 +149,16 @@ const CharacterHup = function(props) {
 export default function CharacterHups({
   localPlayer,
   npcs,
-  remotePlayers
+  remotePlayers,
 }) {
   const [hups, setHups] = useState([]);
 
   useEffect(() => {
     function hupadd(e) {
       const newHups = hups.concat([e.data.hup]);
-      console.log('new hups from jsx', newHups);
+      // console.log('new hups', newHups);
       setHups(newHups);
     }
-
 
     function hupremove(e) {
       const oldHup = e.data.hup;
@@ -178,8 +177,8 @@ export default function CharacterHups({
     }
 
     for (const remotePlayer of remotePlayers) {
-      remotePlayer.characterHups.addEventListener('hupadd', hupadd)
-      remotePlayer.characterHups.addEventListener('hupremove', hupremove)
+      remotePlayer.characterHups.addEventListener('hupadd', hupadd);
+      remotePlayer.characterHups.addEventListener('hupremove', hupremove);
     }
 
     return () => {
@@ -190,7 +189,7 @@ export default function CharacterHups({
         npcPlayer.characterHups.removeEventListener('hupremove', hupremove);
       }
       for (const remotePlayer of remotePlayers) {
-        remotePlayer.characterHups.removeEventListener('hupadd', hupadd)
+        remotePlayer.characterHups.removeEventListener('hupadd', hupadd);
         localPlayer.characterHups.removeEventListener('hupremove', hupremove);
       }
     };
@@ -211,4 +210,4 @@ export default function CharacterHups({
       })}
     </div>
   );
-};
+}

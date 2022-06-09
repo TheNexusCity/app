@@ -123,6 +123,7 @@ const Canvas = ({
 };
 
 export const App = () => {
+    
     const [ state, setState ] = useState({ openedPanel: null });
 
     const app = useWebaverseApp();

@@ -297,6 +297,7 @@ class CharacterFx {
     }
     if (this.nameplate) {
       sceneLowPriority.remove(this.nameplate);
+      if (this.nameplate.destroy) this.nameplate.destroy();
       this.nameplate = null;
     }
   }

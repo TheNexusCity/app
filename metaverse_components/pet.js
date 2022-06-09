@@ -87,8 +87,6 @@ export default (app, component) => {
     }
   });
 
-  
-
   const _getCurrentPlayer = () => {
     const localPlayer = useLocalPlayer();
     let currentPlayer = null

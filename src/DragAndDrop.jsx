@@ -11,7 +11,7 @@ import game from '../game.js';
 import {getRenderer} from '../renderer.js';
 import cameraManager from '../camera-manager.js';
 import metaversefile from 'metaversefile';
-import { AppContext } from './components/app';
+import {AppContext} from './components/app';
 import useNFTContract from './hooks/useNFTContract';
 
 const _upload = () => new Promise((accept, reject) => {
@@ -70,7 +70,7 @@ const uploadCreateApp = async (item, {
           physics: true,
         },
       });
-    } catch(err) {
+    } catch (err) {
       console.warn(err);
     }
     load.end();
@@ -102,7 +102,7 @@ const DragAndDrop = () => {
             const app = await _upload();
             setQueue(queue.concat([app]));
           })();
-  
+
           return false;
         }
         case 27: { // esc
@@ -159,7 +159,7 @@ const DragAndDrop = () => {
           if (app) {
             if (drop) {
               world.appManager.importApp(app);
-              setState({ openedPanel: null });
+              setState({openedPanel: null});
             } else {
               setQueue(queue.concat([app]));
             }
@@ -190,7 +190,7 @@ const DragAndDrop = () => {
       const app = queue[0];
       setCurrentApp(app);
       setQueue(queue.slice(1));
-      setState({ openedPanel: null });
+      setState({openedPanel: null});
 
       if (cameraManager.pointerLockElement) {
         cameraManager.exitPointerLock();

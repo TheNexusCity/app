@@ -614,7 +614,7 @@ const _gameInit = () => {
   grabUseMesh = metaversefileApi.createApp();
   (async () => {
     await metaverseModules.waitForLoad();
-    const { modules } = metaversefileApi.useDefaultModules();
+    const {modules} = metaversefileApi.useDefaultModules();
     const m = modules["button"];
     await grabUseMesh.addModule(m);
   })();

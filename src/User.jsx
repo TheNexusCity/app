@@ -3,7 +3,6 @@ import classnames from 'classnames';
 
 import { discordClientId } from '../constants';
 import { parseQuery } from '../util.js';
-
 // import Modal from './components/modal';
 import WebaWallet from './components/wallet';
 
@@ -112,7 +111,6 @@ export const User = ({ setLoginFrom }) => {
         //
 
         const discordAutoLogin = async () => {
-            console.warn("Skipping discord auto login")
             // const { address, error } = await WebaWallet.loginDiscord( code, id );
 
             // if ( address ) {
@@ -216,7 +214,7 @@ export const User = ({ setLoginFrom }) => {
 
                     if ( !open ) {
 
-                        setState({openedPanel: 'LoginPanel' });
+                        setState({ openedPanel: 'LoginPanel' });
 
                     } else {
                         setState({ openedPanel: null });

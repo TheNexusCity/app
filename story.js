@@ -95,7 +95,7 @@ class Conversation extends EventTarget {
       }
     }); */
   }
-  addLocalPlayerMessage(text, type = 'chat') {
+  addMessage(text, type = 'chat') {
     const message = {
       type,
       player: this.localPlayer,
@@ -181,7 +181,7 @@ class Conversation extends EventTarget {
       } = await aiScene.generateChatMessage(this.messages, this.localPlayer.name);
       
       if (!this.messages.some(m => m.text === comment && m.player === this.localPlayer)) {
-        this.addLocalPlayerMessage(comment);
+        this.addMessage(comment);
         done && this.finish();
       } else {
         this.finish();
@@ -215,7 +215,7 @@ class Conversation extends EventTarget {
     }
 
     // say the option
-    this.addLocalPlayerMessage(option, 'option');
+    this.addMessage(option, 'option');
     
     // clear options
     this.#setOptions(null);
@@ -427,7 +427,7 @@ const _startConversation = (comment, remotePlayer, done) => {
       conversation: currentConversation,
     },
   }));
-  currentConversation.addLocalPlayerMessage(comment);
+  currentConversation.addMessage(comment);
   done && currentConversation.finish();
   return currentConversation;
 };

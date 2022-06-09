@@ -4,28 +4,25 @@ player objects load their own avatar and apps using this binding */
 // import * as THREE from 'three';
 import * as Z from 'zjs';
 import {RemotePlayer} from './character-controller.js';
-import {getLocalPlayer} from './players.js'
-import metaversefileApi from 'metaversefile';
+import {getLocalPlayer} from './players.js';
 
-Error.stackTraceLimit = 300;
 class PlayersManager {
   constructor() {
     this.playersArray = null;
 
     this.remotePlayers = new Map();
     this.remotePlayersByInteger = new Map();
-    window.remotePlayers = this.remotePlayers;
 
     this.unbindStateFn = null;
   }
+
   getPlayersState() {
     return this.playersArray;
   }
+
   unbindState() {
     const lastPlayers = this.playersArray;
     if (lastPlayers) {
-      console.log('unbind player observers', lastPlayers, new Error().stack);
-      console.log('got players array', this.playersArray);
       const playerSpecs = this.playersArray.toJSON();
       const nonLocalPlayerSpecs = playerSpecs.filter(p => {
         return p.playerId !== getLocalPlayer().playerId;
@@ -33,12 +30,10 @@ class PlayersManager {
       for (const nonLocalPlayer of nonLocalPlayerSpecs) {
         const remotePlayer = this.remotePlayers.get(nonLocalPlayer.playerId);
         if (remotePlayer) {
-          console.log('destroy remote player', remotePlayer);
           remotePlayer.destroy();
           this.remotePlayers.delete(nonLocalPlayer.playerId);
         } else {
-          console.log('no remote player to destroy', nonLocalPlayer.playerId);
-          throw new Error('no remote player to destroy');
+          console.error('Error: No remote player to destroy');
         }
       }
 
@@ -47,6 +42,7 @@ class PlayersManager {
       this.unbindStateFn = null;
     }
   }
+
   bindState(nextPlayersArray) {
     this.unbindState();
 
@@ -55,9 +51,9 @@ class PlayersManager {
     if (this.playersArray) {
       const localPlayer = getLocalPlayer();
 
-      const playersObserveFn = (e) => {
-        const { added, deleted, delta, keys } = e.changes;
-        
+      const playersObserveFn = e => {
+        const {added, deleted, delta, keys} = e.changes;
+
         const values = Array.from(added.values());
         for (const item of added.values()) {
           let playerMap = item.content.type;
@@ -72,11 +68,11 @@ class PlayersManager {
           }
 
           const playerId = playerMap.get('playerId');
+
           const name = playerMap.get('name');
 
           if (playerId !== localPlayer.playerId) {
             // console.log('add player', playerId, this.playersArray.toJSON());
-
             const remotePlayer = new RemotePlayer({
               name,
               playerId,
@@ -85,24 +81,24 @@ class PlayersManager {
             this.remotePlayers.set(playerId, remotePlayer);
             this.remotePlayersByInteger.set(remotePlayer.playerIdInt, remotePlayer);
 
-             // reset remote player's voicer
-             remotePlayer.dispatchEvent({type: "resetvoicer"});
+            // reset remote player's voicer
+            remotePlayer.dispatchEvent({type: 'resetvoicer'});
           }
         }
         // console.log('players observe', added, deleted);
         for (const item of deleted.values()) {
-          console.log('player remove 1', item);
+          // console.log('player remove 1', item);
           const playerId = item.content.type._map.get('playerId').content.arr[0]; // needed to get the old data
-          console.log('player remove 2', playerId, localPlayer.playerId);
+          // console.log('player remove 2', playerId, localPlayer.playerId);
 
           if (playerId !== localPlayer.playerId) {
-            console.log('remove player 3', playerId);
+            // console.log('remove player 3', playerId);
 
             const remotePlayer = this.remotePlayers.get(playerId);
             this.remotePlayers.delete(playerId);
-            console.log("deleting remote player", remotePlayer);
+            // console.log('deleting remote player', remotePlayer);
             this.remotePlayersByInteger.delete(remotePlayer.playerIdInt);
-            
+
             remotePlayer.destroy();
           }
         }
@@ -110,10 +106,11 @@ class PlayersManager {
       this.playersArray.observe(playersObserveFn);
       this.unbindStateFn = this.playersArray.unobserve.bind(
         this.playersArray,
-        playersObserveFn
+        playersObserveFn,
       );
     }
   }
+
   updateRemotePlayers(timestamp, timeDiff) {
     for (const remotePlayer of this.remotePlayers.values()) {
       remotePlayer.updateAvatar(timestamp, timeDiff);
@@ -122,4 +119,4 @@ class PlayersManager {
 }
 const playersManager = new PlayersManager();
 
-export { playersManager };
+export {playersManager};

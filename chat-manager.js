@@ -1,7 +1,5 @@
 import {makeId, makePromise} from './util.js';
 import metaversefileApi from 'metaversefile';
-import { world } from './world.js';
-
 
 const _getEmotion = text => {
   let match;
@@ -36,8 +34,6 @@ class ChatManager extends EventTarget {
     const match = _getEmotion(m.message);
     const emotion = match ? match.emotion : null;
     const value = emotion ? 1 : 0;
-    console.log("Add player message player.name is", player.name)
-
     player.addAction(m);
     
     const _addFacePose = () => {
@@ -58,7 +54,6 @@ class ChatManager extends EventTarget {
         }
       }
     };
-
     const localTimeout = setTimeout(() => {
       this.removePlayerMessage(player, m);
       
