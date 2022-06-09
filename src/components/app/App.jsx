@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, createContext } from 'react';
+import React, { useState, useEffect, useRef, createContext, useContext } from 'react';
 import classnames from 'classnames';
 
 import { defaultPlayerSpec } from '../../../constants';
@@ -38,18 +38,20 @@ import styles from './App.module.css';
 import '../../fonts.css';
 import raycastManager from '../../../raycast-manager';
 
+import { AccountContext } from '../../hooks/web3AccountProvider';
+import { ChainContext } from '../../hooks/chainProvider';
+
 //
 
 const _startApp = async ( weba, canvas ) => {
-
-    weba.setContentLoaded();
 
     weba.bindInput();
     weba.bindInterface();
     weba.bindCanvas( canvas );
 
-    await weba.waitForLoad();
     universe.handleUrlUpdate();
+    await weba.waitForLoad();
+    weba.setContentLoaded();
     await weba.startLoop();
 
     const localPlayer = metaversefileApi.useLocalPlayer();
@@ -60,16 +62,9 @@ const _startApp = async ( weba, canvas ) => {
 
 const _getCurrentSceneSrc = () => {
 
-    const q = parseQuery( window.location.search );
-    let { src } = q;
+    let { src } = parseQuery( window.location.search );
 
-    if ( src === undefined ) {
-
-        src = './scenes/' + sceneNames[0];
-
-    }
-
-    return src;
+    return src ?? './' + sceneNames[0];
 
 };
 
@@ -128,7 +123,6 @@ const Canvas = ({
 };
 
 export const App = () => {
-
     const [ state, setState ] = useState({ openedPanel: null });
 
     const app = useWebaverseApp();
@@ -136,6 +130,8 @@ export const App = () => {
     const [ selectedScene, setSelectedScene ] = useState( _getCurrentSceneSrc() );
     const [ selectedRoom, setSelectedRoom ] = useState( _getCurrentRoom() );
     const [ apps, setApps ] = useState( world.appManager.getApps().slice() );
+    const account = useContext(AccountContext);
+    const chain = useContext(ChainContext);
 
     //
 
@@ -276,7 +272,7 @@ export const App = () => {
             onDragEnd={onDragEnd}
             onDragOver={onDragOver}
         >
-            <AppContext.Provider value={{ state, setState, app, setSelectedApp, selectedApp }}>
+            <AppContext.Provider value={{ state, setState, app, setSelectedApp, selectedApp, account, chain }}>
                 <Header setSelectedApp={ setSelectedApp } selectedApp={ selectedApp } />
                 
                 <DomRenderer />

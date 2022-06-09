@@ -34,7 +34,7 @@ const MegaHup = function({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (canvas && npcPlayer) {
+    if (canvas && npcPlayer && npcPlayer.avatar) {
       let live = true;
       let diorama = null;
       {

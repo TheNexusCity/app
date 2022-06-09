@@ -234,7 +234,7 @@ class CharacterFx {
 
     this.lastSSS = isSSS;
     const _updateSonicBoomMesh = () => {
-      if (this.player.isLocalPlayer && !this.sonicBoom) {
+      if ( !this.sonicBoom ) {
         this.sonicBoom = metaversefile.createApp();
         (async () => {
           const {modules} = metaversefile.useDefaultModules();
@@ -245,6 +245,19 @@ class CharacterFx {
       }
     };
     _updateSonicBoomMesh();
+    const _updateNameplate = () => {
+      if ( !this.nameplate ) {
+        (async () => {
+        this.nameplate = metaversefile.createApp();
+        this.nameplate.player = this.player;
+          const {modules} = metaversefile.useDefaultModules();
+          const m = modules['nameplate'];
+          await this.nameplate.addModule(m);
+          sceneLowPriority.add(this.nameplate);
+        })();
+      }
+    };
+    _updateNameplate();
     const _updateHealEffectMesh = () => {
       
       if(this.player.hasAction('cure')){
@@ -281,6 +294,10 @@ class CharacterFx {
     if (this.healEffect) {
       sceneLowPriority.remove(this.healEffect);
       this.healEffect = null;
+    }
+    if (this.nameplate) {
+      sceneLowPriority.remove(this.nameplate);
+      this.nameplate = null;
     }
   }
 }

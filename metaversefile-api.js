@@ -50,6 +50,7 @@ import * as scenePreviewer from './scene-previewer.js';
 import * as sounds from './sounds.js';
 import * as lodder from './lod.js';
 import hpManager from './hp-manager.js';
+import {playersManager} from './players-manager.js';
 import particleSystemManager from './particle-system.js';
 import domRenderEngine from './dom-renderer.jsx';
 import dropManager from './drop-manager.js';
@@ -364,7 +365,7 @@ metaversefile.setApi({
     }
     // console.log('js import', s);
     try {
-      const m = await import(s);
+      const m = await import(/* @vite-ignore */s);
       return m;
     } catch(err) {
       console.warn('error loading', JSON.stringify(s), err.stack);
@@ -535,14 +536,14 @@ metaversefile.setApi({
     return getLocalPlayer();
   },
   useRemotePlayer(playerId) {
-    let player = remotePlayers.get(playerId);
+    let player = playersManager.remotePlayers.get(playerId);
     /* if (!player) {
       player = new RemotePlayer();
     } */
     return player;
   },
   useRemotePlayers() {
-    return Array.from(remotePlayers.values());
+    return Array.from(playersManager.remotePlayers.values());
   },
   useNpcManager() {
     return npcManager;
@@ -1016,6 +1017,21 @@ export default () => {
 
     // default
     return null;
+  },
+  getPlayerByInstanceId(instanceId) {
+    let result = localPlayer.appManager.getAppByInstanceId(instanceId);
+    if (result) {
+      return localPlayer;
+    } else {
+      const remotePlayers = metaversefile.useRemotePlayers();
+      for (const remotePlayer of remotePlayers) {
+        const remoteApp = remotePlayer.appManager.getAppByInstanceId(instanceId);
+        if (remoteApp) {
+          return remotePlayer;
+        }
+      }
+      return null;
+    }
   },
   getAppByPhysicsId(physicsId) {
     // local player

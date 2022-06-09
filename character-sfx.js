@@ -90,11 +90,19 @@ class CharacterSfx {
       };
     }
   }
-  update(timestamp, timeDiffS) {
+  update(timestamp, timeDiffS, actions = []) {
     if (!this.player.avatar) {
       return;
     }
-    
+
+    //check current actions has sit action
+    let hasSitAction = false
+    for (const action of actions) { 
+      if (action.type === 'sit') {
+        hasSitAction = true
+      }
+    }
+
     const timeSeconds = timestamp/1000;
     const currentSpeed = localVector.set(this.player.avatar.velocity.x, 0, this.player.avatar.velocity.z).length();
     
@@ -207,7 +215,10 @@ class CharacterSfx {
       }
       
     };
-    _handleStep();
+
+    if (!hasSitAction) {
+      _handleStep();
+    }
 
     const _handleNarutoRun = () => {
       
@@ -415,6 +426,7 @@ class CharacterSfx {
       if (!this.player.avatar.isAudioEnabled()) {
         this.player.avatar.setAudioEnabled(true);
       }
+      
       audioBufferSourceNode.connect(this.player.avatar.getAudioInput());
 
       // if the oldGrunt are still playing

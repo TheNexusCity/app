@@ -22,22 +22,21 @@ import styles from './Header.module.css';
 //
 
 export default function Header() {
-
-    const { state, setState, selectedApp } = useContext( AppContext );
+    const { state, setState, selectedApp, account } = useContext( AppContext );
     const localPlayer = metaversefile.useLocalPlayer();
+    const remotePlayers = metaversefile.useRemotePlayers();
     const _getWearActions = () => localPlayer.getActionsArray().filter(action => action.type === 'wear');
 
     const dioramaCanvasRef = useRef();
     const panelsRef = useRef();
 
-    const [address, setAddress] = useState('');
     const [nfts, setNfts] = useState(null);
     // const [apps, setApps] = useState(world.appManager.getApps().slice());
     // const [claims, setClaims] = useState([]);
     // const [dragging, setDragging] = useState(false);
     const [loginFrom, setLoginFrom] = useState('');
     const [wearActions, setWearActions] = useState(_getWearActions());
-
+    const address = account.currentAddress;
     //
 
     const stopPropagation = ( event ) => {
@@ -75,7 +74,7 @@ export default function Header() {
 
             if ( pointerLockElement && state.openedPanel !== null) {
 
-                setState({ openedPanel: null });
+                setState({openedPanel: null });
 
             }
 
@@ -244,7 +243,7 @@ export default function Header() {
 
         if ( claimsOpen ) {
 
-            setState({ openedPanel: null });
+            setState({openedPanel: null });
 
         } else {
 
@@ -261,15 +260,12 @@ export default function Header() {
             <CharacterHups
               localPlayer={localPlayer}
               npcs={npcs}
+              remotePlayers={remotePlayers}
             />
             <StoryTime />
             {/* <div className={styles.inner}> */}
                 <AvatarIcon />
-                <User
-                    address={address}
-                    setAddress={setAddress}
-                    setLoginFrom={setLoginFrom}
-                />
+                <User setLoginFrom={setLoginFrom} />
                 <div className={styles.tabs}>
                     <Character
                         panelsRef={panelsRef}
@@ -287,6 +283,8 @@ export default function Header() {
                         claims={claims}
                         panelsRef={panelsRef}
                     /> */}
+                </div>
+                <div className={styles.panels}>
                     <Tokens
                         nfts={nfts}
                         hacks={hacks}
