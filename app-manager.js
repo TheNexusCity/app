@@ -571,19 +571,17 @@ class AppManager extends EventTarget {
       this.callBackFn(app, "wear", "add");
     }
 
-    const grabupdate = (e) => {
-      app.isGrab = e.grab
-    }
-    
-    app.addEventListener('grabupdate', grabupdate);
-
     const trackedApp = this.getTrackedApp(app.instanceId);
     const _observe = (e) => {
       const transform = trackedApp.get("transform");
-      if (e.changes.keys.has("transform") && transform) {
-        const isGrab = transform[10];
-        if (!isGrab) return
-        // app.isGrab = true
+      const isGrab = trackedApp.get("grab");
+      if (e.changes.keys.has("grab") && isGrab) {
+        app.isGrabbed = isGrab && isGrab[0]
+      }
+
+      app.isGrabbed = isGrab && isGrab[0]
+
+      if (app.isGrabbed && e.changes.keys.has("transform") && transform) {
         app.position.fromArray(transform, 0);
         app.quaternion?.fromArray(transform, 3);
         app.scale?.fromArray(transform, 7);
@@ -753,6 +751,7 @@ class AppManager extends EventTarget {
     }
   }
   packed = new Float32Array(12);
+  packed2 = new Float32Array(1);
   update() {
     for (const app of this.apps) {
       const trackedApp = this.getTrackedApp(app.instanceId);
@@ -830,6 +829,10 @@ class AppManager extends EventTarget {
       } else {
         trackedApp.delete("transform");
       }
+
+      const packed2 = this.packed2
+      packed2[0] = app.isGrab
+      trackedApp.set("grab", packed2);
     }
   }
 

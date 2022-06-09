@@ -777,8 +777,11 @@ const _gameUpdate = (timestamp, timeDiff) => {
       const collision = physx.physxWorker.raycastPhysics(physx.physics, position, quaternion);
       if (collision) {
         const physicsId = collision.objectId;
-        highlightedPhysicsObject =
+        const highlightedApp =
           metaversefileApi.getAppByPhysicsId(physicsId);
+        if (highlightedApp && !highlightedApp.isGrabbed) {
+          highlightedPhysicsObject = highlightedApp
+        }
         highlightedPhysicsId = physicsId;
       }
     }
