@@ -1213,6 +1213,8 @@ class LocalPlayer extends Player {
       );
     }
 
+    app.isGrab = true
+
     app.dispatchEvent({
       type: "grabupdate",
       grab: true,
@@ -1234,6 +1236,8 @@ class LocalPlayer extends Player {
         }
         this.removeActionIndex(i + removeOffset);
         removeOffset -= 1;
+
+        app.isGrab = false
 
         app.dispatchEvent({
           type: "grabupdate",

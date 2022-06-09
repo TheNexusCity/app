@@ -581,6 +581,9 @@ class AppManager extends EventTarget {
     const _observe = (e) => {
       const transform = trackedApp.get("transform");
       if (e.changes.keys.has("transform") && transform) {
+        const isGrab = transform[10];
+        if (!isGrab) return
+        // app.isGrab = true
         app.position.fromArray(transform, 0);
         app.quaternion?.fromArray(transform, 3);
         app.scale?.fromArray(transform, 7);
@@ -749,7 +752,7 @@ class AppManager extends EventTarget {
       }, "push");
     }
   }
-  packed = new Float32Array(11);
+  packed = new Float32Array(12);
   update() {
     for (const app of this.apps) {
       const trackedApp = this.getTrackedApp(app.instanceId);
@@ -779,6 +782,7 @@ class AppManager extends EventTarget {
             pack3(localVector, 0);
             pack4(localQuaternion, 3);
             pack3(localVector2, 7);
+            packed[10] = app.isGrab;
             trackedApp.set("transform", packed);
             console.warn("push transform", packed)
           }
