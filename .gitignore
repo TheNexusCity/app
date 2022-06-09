@@ -7,3 +7,4 @@ dist
 config.json
 yarn.lock
 lore
+.vscode
