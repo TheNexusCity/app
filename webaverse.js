@@ -197,7 +197,7 @@ export default class Webaverse extends EventTarget {
     }));
   }
 
-  window.addEventListener('pushstate', pushstate);
+  // window.addEventListener('pushstate', pushstate);
 
   /* injectRigInput() {
     let leftGamepadPosition, leftGamepadQuaternion, leftGamepadPointer, leftGamepadGrip, leftGamepadEnabled;
