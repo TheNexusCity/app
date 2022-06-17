@@ -171,6 +171,22 @@ export default class Webaverse extends EventTarget {
         try {
           session = await navigator.xr.requestSession(sessionMode);
         } catch (err) {
+          console.warn(err);
+        }
+      }
+      if (session) {
+        const onSessionEnded = e => {
+          session.removeEventListener('end', onSessionEnded);
+          renderer.xr.setSession(null);
+        };
+        session.addEventListener('end', onSessionEnded);
+        renderer.xr.setSession(session);
+        // renderer.xr.setReferenceSpaceType('local-floor');
+      }
+    } else {
+      await session.end();
+    }
+  }
 
   updateLoadingScreen(titleCardHack, progress = undefined) {
     webaverse.dispatchEvent(new MessageEvent('titlecardhackchange', {
@@ -181,7 +197,7 @@ export default class Webaverse extends EventTarget {
     }));
   }
 
-  // window.addEventListener('pushstate', pushstate);
+  window.addEventListener('pushstate', pushstate);
 
   /* injectRigInput() {
     let leftGamepadPosition, leftGamepadQuaternion, leftGamepadPointer, leftGamepadGrip, leftGamepadEnabled;
