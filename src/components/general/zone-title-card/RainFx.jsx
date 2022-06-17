@@ -9,7 +9,7 @@ import styles from './zone-title-card.module.css';
 //
 
 export const RainFx = ({
-  // app,
+  app,
   enabled,
 }) => {
     const [renderer, setRenderer] = useState(null);
@@ -21,6 +21,8 @@ export const RainFx = ({
     const rainBgFxMesh = new RainBgFxMesh();
     rainBgFxMesh.frustumCulled = false;
     scene.add(rainBgFxMesh);
+
+    let isMainFrameLoop = false
 
     const _updateRendererSize = renderer => {
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -66,9 +68,31 @@ export const RainFx = ({
                     renderer.clear();
                     renderer.render(scene, camera);
                 }
-                world.appManager.addEventListener('frame', frame);
+                let lastTimestamp = performance.now();
+
+                function appAnimationLoop (e) {
+                    isMainFrameLoop = true
+                    frame(e)
+                }
+
+                function systemAnimationLoop (e) {
+                    if (isMainFrameLoop) return
+                    const {timestamp} = e.data;
+                    const timeDiff = timestamp - lastTimestamp;
+                    frame({
+                        data: {
+                            timestamp,
+                            timeDiff
+                        }
+                    })
+                }
+
+                // renderer.setAnimationLoop(systemAnimationLoop);
+                world.appManager.addEventListener('frame', appAnimationLoop);
+                app.addEventListener('preframe', systemAnimationLoop);
                 return () => {
-                    world.appManager.removeEventListener('frame', frame);
+                    world.appManager.removeEventListener('frame', appAnimationLoop);
+                    app.removeEventListener('preframe', systemAnimationLoop);
                 };
         }  
     }, [canvasRef, enabled]);

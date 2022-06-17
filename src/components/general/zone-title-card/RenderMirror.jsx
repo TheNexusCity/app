@@ -27,9 +27,9 @@ export const RenderMirror = ({
               // const imageBitmap = await createImageBitmap(mainCanvas, 0, 0, canvas.width, canvas.height);
               // ctx.transferFromImageBitmap(imageBitmap);
           }
-          app.addEventListener('frameend', frameend);
+          app.addEventListener('preframe', frameend);
           return () => {
-              app.removeEventListener('frameend', frameend);
+              app.removeEventListener('preframe', frameend);
           };
       }
   }, [canvasRef, width, enabled]);

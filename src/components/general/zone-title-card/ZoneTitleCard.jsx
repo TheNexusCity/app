@@ -25,25 +25,22 @@ export const ZoneTitleCard = () => {
 
     useEffect(() => {
         function titlecardhackchange(e) {
-            const {titleCardHack} = e.data;
-            setOpen(titleCardHack);
+            const {titleCardHack, progress} = e.data;
+            console.error(titleCardHack, progress)
+            if (titleCardHack !== undefined) {
+                setOpen(titleCardHack)
+            }
+            if (progress !== undefined) {
+                let loadProgress = (progress / 100) % 1
+                if (progress === 100) loadProgress = 1
+                setLoadProgress(loadProgress)
+            }
         }
         app.addEventListener('titlecardhackchange', titlecardhackchange);
         return () => {
             app.removeEventListener('titlecardhackchange', titlecardhackchange);
         };
     }, []);
-
-    useEffect(() => {
-        if (open) {
-            const frame = requestAnimationFrame(() => {
-                setLoadProgress((loadProgress + 0.005) % 1);
-            });
-            return () => {
-                cancelAnimationFrame(frame);
-            };
-        }
-    }, [open, loadProgress]);
 
     const title = 'Zone Title';
     const description = 'Zone Description';
@@ -59,7 +56,7 @@ export const ZoneTitleCard = () => {
                 <img className={ styles.tailImg } src="images/snake-tongue.svg" />
             </div>
             <div className={ styles.rightSection }>
-                <RenderMirror app={app} width={128} enabled={app.titleCardHack} />
+                <RenderMirror app={app} width={128} enabled={open} />
                 <div className={ styles.title }>
                     <div className={ styles.background } />
                     <div className={ styles.text }>{title}</div>
@@ -78,7 +75,7 @@ export const ZoneTitleCard = () => {
                 </div>
             </div>
 
-            <RainFx enabled={open} />
+            <RainFx app={app} enabled={open} />
         </div>
     );
 

@@ -80,7 +80,7 @@ export default class Webaverse extends EventTarget {
     story.listenHack();
 
     this.loadPromise = (async () => {
-      await Promise.all([
+      const promises = [
         physx.waitForLoad(),
         physxWorkerManager.waitForLoad(),
         Avatar.waitForLoad(),
@@ -94,7 +94,15 @@ export default class Webaverse extends EventTarget {
         musicManager.waitForLoad(),
         dcWorkerManager.waitForLoad(),
         WebaWallet.waitForLoad(),
-      ]);
+      ]
+      let d = 0
+      for (const p of promises) {
+        p.then(() => {
+          d++
+          webaverse.updateLoadingScreen(true, (d * 100) / promises.length)
+        });
+      }
+      await Promise.all(promises);
     })();
   }
 
@@ -163,22 +171,17 @@ export default class Webaverse extends EventTarget {
         try {
           session = await navigator.xr.requestSession(sessionMode);
         } catch (err) {
-          console.warn(err);
-        }
-      }
-      if (session) {
-        const onSessionEnded = e => {
-          session.removeEventListener('end', onSessionEnded);
-          renderer.xr.setSession(null);
-        };
-        session.addEventListener('end', onSessionEnded);
-        renderer.xr.setSession(session);
-        // renderer.xr.setReferenceSpaceType('local-floor');
-      }
-    } else {
-      await session.end();
-    }
+
+  updateLoadingScreen(titleCardHack, progress = undefined) {
+    webaverse.dispatchEvent(new MessageEvent('titlecardhackchange', {
+      data: {
+        titleCardHack,
+        progress
+      },
+    }));
   }
+
+  // window.addEventListener('pushstate', pushstate);
 
   /* injectRigInput() {
     let leftGamepadPosition, leftGamepadQuaternion, leftGamepadPointer, leftGamepadGrip, leftGamepadEnabled;
@@ -294,12 +297,22 @@ export default class Webaverse extends EventTarget {
     this.bindInput();
     this.bindInterface();
     this.bindCanvas(canvas);
-
-    if (universe) await universe.handleUrlUpdate();
-    await this.waitForLoad();
-
+    
+    let isLoadEnded = false
+    
+    const renderer = getRenderer();
     let lastTimestamp = performance.now();
     const animate = (timestamp, frame) => {
+      if (!isLoadEnded) {
+        this.dispatchEvent(new MessageEvent('preframe', {
+          data: {
+            canvas: renderer.domElement,
+            context: renderer.getContext(),
+            timestamp,
+          },
+        }));
+        return
+      }
       performanceTracker.startFrame();
 
       const _frame = () => {
@@ -375,12 +388,19 @@ export default class Webaverse extends EventTarget {
       performanceTracker.endFrame();
     };
 
+    renderer.setAnimationLoop(animate);
+
+    webaverse.updateLoadingScreen(true)
+
+    if (universe) await universe.handleUrlUpdate();
+    await this.waitForLoad();
+
     _startHacks(this);
 
     const localPlayer = metaversefileApi.useLocalPlayer();
     await localPlayer.setPlayerSpec(defaultPlayerSpec);
-    const renderer = getRenderer();
-    renderer.setAnimationLoop(animate);
+    webaverse.updateLoadingScreen(false)
+    isLoadEnded = true
   }
 }
 
@@ -572,11 +592,7 @@ const _startHacks = webaverse => {
       // _updateMikuModel();
     } else if (e.which === 106) { // *
       webaverse.titleCardHack = !webaverse.titleCardHack;
-      webaverse.dispatchEvent(new MessageEvent('titlecardhackchange', {
-        data: {
-          titleCardHack: webaverse.titleCardHack,
-        },
-      }));
+      webaverse.updateLoadingScreen(webaverse.titleCardHack)
     } else {
       const match = e.code.match(/^Numpad([0-9])$/);
       if (match) {
