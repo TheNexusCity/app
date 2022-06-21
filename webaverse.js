@@ -43,7 +43,6 @@ import renderSettingsManager from './rendersettings-manager.js';
 import metaversefileApi from 'metaversefile';
 import WebaWallet from './src/components/wallet.js';
 import musicManager from './music-manager.js';
-import dcWorkerManager from './dc-worker-manager.js';
 import story from './story.js';
 import zTargeting from './z-targeting.js';
 import raycastManager from './raycast-manager.js';
@@ -425,14 +424,18 @@ export default class Webaverse extends EventTarget {
         particleSystemManager.update(timestamp, timeDiffCapped);
 
         // Update app owners
-        world.update(timestamp, timeDiffCapped, frame);
 
-        localPlayer.appManager.tick(timestamp, timeDiff, frame);
+        localPlayer.appManager.tick(timestamp, timeDiffCapped, frame);
+
         localPlayer.update(timestamp, timeDiffCapped, frame);
 
         for (const remotePlayer of playersManager.remotePlayers.values()) {
           remotePlayer.update(timestamp, timeDiff);
         }
+
+        world.appManager.tick(timestamp, timeDiffCapped, frame);
+
+        world.appManager.update(timestamp, timeDiffCapped, frame);
 
         // After game loop, update camera pose
         cameraManager.updatePost(timestamp, timeDiffCapped);
@@ -475,21 +478,6 @@ export default class Webaverse extends EventTarget {
     webaverse.loadingScreenOpen(true)
     await universe.handleUrlUpdate();
   }
-}
-
-const getAppsDetail = async () => {
-  const worldSpec = parseQuery(location.search);
-  let srcUrl = './scenes/' + sceneNames[0]
-  const {src, room} = worldSpec;
-  if (!room) {
-    if (src) srcUrl = src
-  } else {
-    
-  }
-  const res = await fetch(srcUrl);
-  const j = await res.json();
-  const {objects} = j;
-  const buckets = {};
 }
 
 // import {MMDLoader} from 'three/examples/jsm/loaders/MMDLoader.js';

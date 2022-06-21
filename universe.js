@@ -27,8 +27,6 @@ class Universe extends EventTarget {
   }
 
   async enterWorld(worldSpec) {
-    logger.log('enterWorld', worldSpec);
-
     world.disconnectRoom();
 
     const localPlayer = metaversefile.useLocalPlayer();
@@ -81,7 +79,6 @@ class Universe extends EventTarget {
       this.sceneLoadedPromise = null;
     };
     await _doLoad();
-    logger.log('Connected to world');
     localPlayer.characterPhysics.reset();
     physicsManager.setPhysicsEnabled(true);
     localPlayer.updatePhysics(0, 0);
