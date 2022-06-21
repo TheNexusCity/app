@@ -75,7 +75,6 @@ class Universe extends EventTarget {
         })();
         promises.push(p);
       }
-
       this.sceneLoadedPromise = Promise.all(promises)
         .then(() => {});
       await this.sceneLoadedPromise;
@@ -98,6 +97,7 @@ class Universe extends EventTarget {
   }
 
   async pushUrl(u) {
+    window.dispatchEvent(new MessageEvent('loadingscreenopen'))
     logger.log('universe.pushUrl', u)
     history.pushState({}, '', u);
     window.dispatchEvent(new MessageEvent('pushstate'));

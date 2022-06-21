@@ -19,7 +19,7 @@ const logoImages = [
 export const ZoneTitleCard = () => {
 
     const { app } = useContext( AppContext );
-    const [ open, setOpen ] = useState( false );
+    const [ open, setOpen ] = useState( true );
     const [ logoImage, setLogoImage ] = useState( logoImages[Math.floor(Math.random() * logoImages.length)] );
     const [ loadProgress, setLoadProgress ] = useState( false );
     const [ fullLoaded, setFullLoaded ]= useState( false );

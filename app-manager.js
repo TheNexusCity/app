@@ -205,6 +205,11 @@ class AppManager extends EventTarget {
   // Also called explicitly by loadApps on remote player at init
   async importTrackedApp(trackedApp) {
     logger.log('appManager.importTrackedApp', trackedApp)
+    window.dispatchEvent(
+      new MessageEvent("importrackedappstarted", {
+        data: trackedApp,
+      })
+    )
     const trackedAppBinding = trackedApp.toJSON();
     const {
       instanceId,
@@ -299,6 +304,11 @@ class AppManager extends EventTarget {
     } finally {
       cleanup();
     }
+    window.dispatchEvent(
+      new MessageEvent("importrackedappended", {
+        data: trackedApp,
+      })
+    )
   }
 
   getApps() {

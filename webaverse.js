@@ -82,28 +82,30 @@ export default class Webaverse extends EventTarget {
 
     story.listenHack();
 
-    this.totalLoadPromise = []
+    this.totalProgressCount = 0
+    this.loadedProgressCount = 0
+    this.isLoadStarted = true
+    this.isModuleLoaded = false
 
-    const modulePromises = [
-      physx.waitForLoad(),
-      physxWorkerManager.waitForLoad(),
-      Avatar.waitForLoad(),
-      audioManager.waitForLoad(),
-      sounds.waitForLoad(),
-      zTargeting.waitForLoad(),
-      particleSystemManager.waitForLoad(),
-      transformControls.waitForLoad(),
-      metaverseModules.waitForLoad(),
-      voices.waitForLoad(),
-      musicManager.waitForLoad(),
-      dcWorkerManager.waitForLoad(),
-      WebaWallet.waitForLoad(),
-    ]
+    window.addEventListener('loadingscreenopen', () => {
+      this.isLoadStarted = true
+      webaverse.loadingScreenOpen(true)
+    })
 
-    this.totalLoadPromise = modulePromises
-    this.loadPromise = (async () => {
-      await Promise.all(modulePromises);
-    })();
+    window.addEventListener('importrackedappstarted', (load) => {
+      if (this.isLoadStarted) this.totalProgressCount++
+      console.error('this.totalAppCount', this.totalProgressCount)
+    })
+
+    window.addEventListener('importrackedappended', (load) => {
+      if (this.loadedProgressCount === 0 && !this.isModuleLoaded) {
+        // TODO: first app loaded, we can get correct app count
+        this.loadModule()
+      }
+      if (this.isLoadStarted) this.loadedProgressCount++
+      console.error('this.loadedAppCount', this.loadedProgressCount)
+      this.calculateProgress()
+    })
   }
 
   waitForLoad() {
@@ -324,17 +326,66 @@ export default class Webaverse extends EventTarget {
     }));
   }
 
+  calculateProgress() {
+    if (this.totalProgressCount === 0) return
+    webaverse.loadingScreenProgress((this.loadedProgressCount * 100) / this.totalProgressCount)
+    if (this.loadedProgressCount >= this.totalProgressCount) {
+      webaverse.loadingScreenOpen(false)
+      webaverse.loadingScreenLoaded(true)
+      this.isLoadStarted = false
+      this.totalProgressCount = 0
+      this.loadedProgressCount = 0
+    }
+  }
+
+  async loadModule() {
+    const modulePromises = [
+      physx.waitForLoad(),
+      physxWorkerManager.waitForLoad(),
+      Avatar.waitForLoad(),
+      audioManager.waitForLoad(),
+      sounds.waitForLoad(),
+      zTargeting.waitForLoad(),
+      particleSystemManager.waitForLoad(),
+      transformControls.waitForLoad(),
+      metaverseModules.waitForLoad(),
+      voices.waitForLoad(),
+      musicManager.waitForLoad(),
+      dcWorkerManager.waitForLoad(),
+      WebaWallet.waitForLoad(),
+    ]
+
+    this.totalProgressCount += modulePromises.length
+
+    for (const p of modulePromises) {
+      p.then(() => {
+        this.loadedProgressCount++
+        webaverse.loadingScreenOpen(true)
+        this.calculateProgress()
+      });
+    }
+
+    await Promise.all(modulePromises);
+
+    this.isModuleLoaded = true
+    
+    const localPlayer = metaversefileApi.useLocalPlayer();
+    const playerSpecPromise = localPlayer.setPlayerSpec(defaultPlayerSpec);
+
+    await playerSpecPromise
+    
+    _startHacks(this);
+  }
+
   async start(canvas, universe = null) {
     this.bindInput();
     this.bindInterface();
     this.bindCanvas(canvas);
     
-    let isLoadEnded = false
-    
     const renderer = getRenderer();
     let lastTimestamp = performance.now();
     const animate = (timestamp, frame) => {
-      if (!isLoadEnded) {
+      if (!this.isModuleLoaded) {
         this.dispatchEvent(new MessageEvent('preframe', {
           data: {
             canvas: renderer.domElement,
@@ -421,34 +472,8 @@ export default class Webaverse extends EventTarget {
 
     renderer.setAnimationLoop(animate);
 
-    
-    let hanldeUrlPromise
-    if (universe) {
-      hanldeUrlPromise = universe.handleUrlUpdate();
-      this.totalLoadPromise.push(hanldeUrlPromise)
-    }
-
-    const localPlayer = metaversefileApi.useLocalPlayer();
-    const playerSpecPromise = localPlayer.setPlayerSpec(defaultPlayerSpec);
-    this.totalLoadPromise.push(playerSpecPromise)
-    
-    let count = 0
-    for (const p of this.totalLoadPromise) {
-      p.then(() => {
-        count++
-        webaverse.loadingScreenOpen(true)
-        webaverse.loadingScreenProgress((count * 100) / this.totalLoadPromise.length)
-      });
-    }
-
-    if (universe) await hanldeUrlPromise
-    _startHacks(this);
-    await this.waitForLoad();
-    await playerSpecPromise
-
-    webaverse.loadingScreenOpen(false)
-    webaverse.loadingScreenLoaded(true)
-    isLoadEnded = true
+    webaverse.loadingScreenOpen(true)
+    await universe.handleUrlUpdate();
   }
 }
 
