@@ -34,7 +34,7 @@
   transform: none;
   transition: transform 1s cubic-bezier(0, 1, 0, 1);
   pointer-events: none;
-  z-index: 1;
+  z-index: 999;
 }
 
 .zoneTitleCard:not(.open) {

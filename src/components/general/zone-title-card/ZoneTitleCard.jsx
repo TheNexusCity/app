@@ -22,27 +22,41 @@ export const ZoneTitleCard = () => {
     const [ open, setOpen ] = useState( false );
     const [ logoImage, setLogoImage ] = useState( logoImages[Math.floor(Math.random() * logoImages.length)] );
     const [ loadProgress, setLoadProgress ] = useState( false );
+    const [ fullLoaded, setFullLoaded ]= useState( false );
 
     useEffect(() => {
-        function titlecardhackchange(e) {
-            const {titleCardHack, progress} = e.data;
-            console.error(titleCardHack, progress)
-            if (titleCardHack !== undefined) {
-                setOpen(titleCardHack)
+        function loadingscreenopen(e) {
+            const {isOpen} = e.data;
+            if (isOpen !== undefined) {
+                console.error('loadingscreenopen', isOpen)
+                setOpen(isOpen)
             }
+        }
+        function webaverseloaded (e) {
+            const {isLoaded} = e.data;
+            console.error('webaverseloaded', isLoaded)
+            setFullLoaded(isLoaded)
+        }
+        function loadingscreenprogress(e) {
+            const {progress} = e.data;
             if (progress !== undefined) {
                 let loadProgress = (progress / 100) % 1
                 if (progress === 100) loadProgress = 1
+                console.error('loadingscreenprogress', progress)
                 setLoadProgress(loadProgress)
             }
         }
-        app.addEventListener('titlecardhackchange', titlecardhackchange);
+        app.addEventListener('loadingscreenopen', loadingscreenopen);
+        app.addEventListener('webaverseloaded', webaverseloaded);
+        app.addEventListener('loadingscreenprogress', loadingscreenprogress);
         return () => {
-            app.removeEventListener('titlecardhackchange', titlecardhackchange);
+            app.removeEventListener('loadingscreenopen', loadingscreenopen);
+            app.removeEventListener('webaverseloaded', webaverseloaded);
+            app.removeEventListener('loadingscreenprogress', loadingscreenprogress);
         };
     }, []);
 
-    const title = 'Zone Title';
+    const title = 'Webaverse';
     const description = 'Zone Description';
     const comment = 'This is a zone comment.';
 
@@ -56,7 +70,9 @@ export const ZoneTitleCard = () => {
                 <img className={ styles.tailImg } src="images/snake-tongue.svg" />
             </div>
             <div className={ styles.rightSection }>
-                <RenderMirror app={app} width={128} enabled={open} />
+                {
+                   <RenderMirror app={app} width={128} enabled={open && fullLoaded} />
+                }
                 <div className={ styles.title }>
                     <div className={ styles.background } />
                     <div className={ styles.text }>{title}</div>

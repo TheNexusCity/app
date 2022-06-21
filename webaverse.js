@@ -49,6 +49,9 @@ import zTargeting from './z-targeting.js';
 import raycastManager from './raycast-manager.js';
 import {defaultPlayerSpec} from './constants';
 
+import sceneNames from './scenes/scenes.json';
+import {parseQuery} from './util.js';
+
 const localVector = new THREE.Vector3();
 const localVector2 = new THREE.Vector3();
 const localQuaternion = new THREE.Quaternion();
@@ -79,30 +82,27 @@ export default class Webaverse extends EventTarget {
 
     story.listenHack();
 
+    this.totalLoadPromise = []
+
+    const modulePromises = [
+      physx.waitForLoad(),
+      physxWorkerManager.waitForLoad(),
+      Avatar.waitForLoad(),
+      audioManager.waitForLoad(),
+      sounds.waitForLoad(),
+      zTargeting.waitForLoad(),
+      particleSystemManager.waitForLoad(),
+      transformControls.waitForLoad(),
+      metaverseModules.waitForLoad(),
+      voices.waitForLoad(),
+      musicManager.waitForLoad(),
+      dcWorkerManager.waitForLoad(),
+      WebaWallet.waitForLoad(),
+    ]
+
+    this.totalLoadPromise = modulePromises
     this.loadPromise = (async () => {
-      const promises = [
-        physx.waitForLoad(),
-        physxWorkerManager.waitForLoad(),
-        Avatar.waitForLoad(),
-        audioManager.waitForLoad(),
-        sounds.waitForLoad(),
-        zTargeting.waitForLoad(),
-        particleSystemManager.waitForLoad(),
-        transformControls.waitForLoad(),
-        metaverseModules.waitForLoad(),
-        voices.waitForLoad(),
-        musicManager.waitForLoad(),
-        dcWorkerManager.waitForLoad(),
-        WebaWallet.waitForLoad(),
-      ]
-      let d = 0
-      for (const p of promises) {
-        p.then(() => {
-          d++
-          webaverse.updateLoadingScreen(true, (d * 100) / promises.length)
-        });
-      }
-      await Promise.all(promises);
+      await Promise.all(modulePromises);
     })();
   }
 
@@ -188,11 +188,26 @@ export default class Webaverse extends EventTarget {
     }
   }
 
-  updateLoadingScreen(titleCardHack, progress = undefined) {
-    webaverse.dispatchEvent(new MessageEvent('titlecardhackchange', {
+  loadingScreenProgress(progress) {
+    webaverse.dispatchEvent(new MessageEvent('loadingscreenprogress', {
       data: {
-        titleCardHack,
-        progress
+        progress,
+      },
+    }));
+  }
+
+  loadingScreenOpen(isOpen) {
+    webaverse.dispatchEvent(new MessageEvent('loadingscreenopen', {
+      data: {
+        isOpen,
+      },
+    }));
+  }
+
+  loadingScreenLoaded(isLoaded) {
+    webaverse.dispatchEvent(new MessageEvent('webaverseloaded', {
+      data: {
+        isLoaded
       },
     }));
   }
@@ -406,18 +421,50 @@ export default class Webaverse extends EventTarget {
 
     renderer.setAnimationLoop(animate);
 
-    webaverse.updateLoadingScreen(true)
-
-    if (universe) await universe.handleUrlUpdate();
-    await this.waitForLoad();
-
-    _startHacks(this);
+    
+    let hanldeUrlPromise
+    if (universe) {
+      hanldeUrlPromise = universe.handleUrlUpdate();
+      this.totalLoadPromise.push(hanldeUrlPromise)
+    }
 
     const localPlayer = metaversefileApi.useLocalPlayer();
-    await localPlayer.setPlayerSpec(defaultPlayerSpec);
-    webaverse.updateLoadingScreen(false)
+    const playerSpecPromise = localPlayer.setPlayerSpec(defaultPlayerSpec);
+    this.totalLoadPromise.push(playerSpecPromise)
+    
+    let count = 0
+    for (const p of this.totalLoadPromise) {
+      p.then(() => {
+        count++
+        webaverse.loadingScreenOpen(true)
+        webaverse.loadingScreenProgress((count * 100) / this.totalLoadPromise.length)
+      });
+    }
+
+    if (universe) await hanldeUrlPromise
+    _startHacks(this);
+    await this.waitForLoad();
+    await playerSpecPromise
+
+    webaverse.loadingScreenOpen(false)
+    webaverse.loadingScreenLoaded(true)
     isLoadEnded = true
   }
+}
+
+const getAppsDetail = async () => {
+  const worldSpec = parseQuery(location.search);
+  let srcUrl = './scenes/' + sceneNames[0]
+  const {src, room} = worldSpec;
+  if (!room) {
+    if (src) srcUrl = src
+  } else {
+    
+  }
+  const res = await fetch(srcUrl);
+  const j = await res.json();
+  const {objects} = j;
+  const buckets = {};
 }
 
 // import {MMDLoader} from 'three/examples/jsm/loaders/MMDLoader.js';
@@ -586,7 +633,7 @@ const _startHacks = webaverse => {
       mikuModel.updateMatrixWorld();
     }
   }; */
-  webaverse.titleCardHack = false;
+  webaverse.isLoadingScreenOpen = false;
   // let haloMeshApp = null;
   window.addEventListener('keydown', e => {
     if (e.which === 46) { // .
@@ -607,8 +654,8 @@ const _startHacks = webaverse => {
       // _ensureMikuModel();
       // _updateMikuModel();
     } else if (e.which === 106) { // *
-      webaverse.titleCardHack = !webaverse.titleCardHack;
-      webaverse.updateLoadingScreen(webaverse.titleCardHack)
+      webaverse.isLoadingScreenOpen = !webaverse.isLoadingScreenOpen;
+      webaverse.loadingScreenOpen(webaverse.isLoadingScreenOpen)
     } else {
       const match = e.code.match(/^Numpad([0-9])$/);
       if (match) {

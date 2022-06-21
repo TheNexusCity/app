@@ -27,14 +27,14 @@ export const RenderMirror = ({
               // const imageBitmap = await createImageBitmap(mainCanvas, 0, 0, canvas.width, canvas.height);
               // ctx.transferFromImageBitmap(imageBitmap);
           }
-          app.addEventListener('preframe', frameend);
+          app.addEventListener('frameend', frameend);
           return () => {
-              app.removeEventListener('preframe', frameend);
+              app.removeEventListener('frameend', frameend);
           };
       }
   }, [canvasRef, width, enabled]);
 
   return (
-      <canvas className={styles.renderMirror} width={width} height={height} ref={canvasRef} />
+      <canvas className={styles.renderMirror} hidden={!enabled} width={width} height={height} ref={canvasRef} />
   );
 };
