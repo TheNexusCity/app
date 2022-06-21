@@ -85,6 +85,28 @@ export default class Webaverse extends EventTarget {
     this.loadedProgressCount = 0
     this.isLoadStarted = true
     this.isModuleLoaded = false
+    this.loadModules = []
+
+    const modulePromises = [
+      physx.waitForLoad(),
+      physxWorkerManager.waitForLoad(),
+      Avatar.waitForLoad(),
+      audioManager.waitForLoad(),
+      sounds.waitForLoad(),
+      zTargeting.waitForLoad(),
+      particleSystemManager.waitForLoad(),
+      transformControls.waitForLoad(),
+      metaverseModules.waitForLoad(),
+      voices.waitForLoad(),
+      musicManager.waitForLoad(),
+      WebaWallet.waitForLoad(),
+    ]
+
+    this.loadModules = modulePromises
+
+    this.loadPromise = (async () => {
+      await Promise.all(modulePromises);
+    })();
 
     window.addEventListener('loadingscreenopen', () => {
       this.isLoadStarted = true
@@ -99,7 +121,7 @@ export default class Webaverse extends EventTarget {
     window.addEventListener('importrackedappended', (load) => {
       if (this.loadedProgressCount === 0 && !this.isModuleLoaded) {
         // TODO: first app loaded, we can get correct app count
-        this.loadModule()
+        // this.loadModule()
       }
       if (this.isLoadStarted) this.loadedProgressCount++
       console.error('this.loadedAppCount', this.loadedProgressCount)
@@ -338,42 +360,7 @@ export default class Webaverse extends EventTarget {
   }
 
   async loadModule() {
-    const modulePromises = [
-      physx.waitForLoad(),
-      physxWorkerManager.waitForLoad(),
-      Avatar.waitForLoad(),
-      audioManager.waitForLoad(),
-      sounds.waitForLoad(),
-      zTargeting.waitForLoad(),
-      particleSystemManager.waitForLoad(),
-      transformControls.waitForLoad(),
-      metaverseModules.waitForLoad(),
-      voices.waitForLoad(),
-      musicManager.waitForLoad(),
-      dcWorkerManager.waitForLoad(),
-      WebaWallet.waitForLoad(),
-    ]
-
-    this.totalProgressCount += modulePromises.length
-
-    for (const p of modulePromises) {
-      p.then(() => {
-        this.loadedProgressCount++
-        webaverse.loadingScreenOpen(true)
-        this.calculateProgress()
-      });
-    }
-
-    await Promise.all(modulePromises);
-
-    this.isModuleLoaded = true
     
-    const localPlayer = metaversefileApi.useLocalPlayer();
-    const playerSpecPromise = localPlayer.setPlayerSpec(defaultPlayerSpec);
-
-    await playerSpecPromise
-    
-    _startHacks(this);
   }
 
   async start(canvas, universe = null) {
@@ -476,7 +463,29 @@ export default class Webaverse extends EventTarget {
     renderer.setAnimationLoop(animate);
 
     webaverse.loadingScreenOpen(true)
+
+    this.totalProgressCount += this.loadModules.length
+    for (const p of this.loadModules) {
+      p.then(() => {
+        this.loadedProgressCount++
+        webaverse.loadingScreenOpen(true)
+        this.calculateProgress()
+      });
+    }
+
     await universe.handleUrlUpdate();
+
+    const localPlayer = metaversefileApi.useLocalPlayer();
+    const playerSpecPromise = localPlayer.setPlayerSpec(defaultPlayerSpec);
+
+    await this.waitForLoad()
+    this.isModuleLoaded = true
+
+    await playerSpecPromise
+    
+    _startHacks(this);
+    
+    this.loadModule()
   }
 }
 
