@@ -12,6 +12,7 @@ import {initialPosY} from './constants.js';
 import {parseQuery} from './util.js';
 import metaversefile from 'metaversefile';
 import sceneNames from './scenes/scenes.json';
+import {loadingManager} from './loading-manager'
 import logger from './logger.js';
 class Universe extends EventTarget {
   constructor() {
@@ -86,7 +87,6 @@ class Universe extends EventTarget {
     this.currentWorld = worldSpec;
 
     this.dispatchEvent(new MessageEvent('worldload'));
-    window.dispatchEvent(new MessageEvent('loadingscreenclosed'))
   }
 
   async reload() {
@@ -95,11 +95,12 @@ class Universe extends EventTarget {
   }
 
   async pushUrl(u) {
-    window.dispatchEvent(new MessageEvent('loadingscreenopen'))
+    loadingManager.startLoading()
     logger.log('universe.pushUrl', u)
     history.pushState({}, '', u);
     window.dispatchEvent(new MessageEvent('pushstate'));
     await this.handleUrlUpdate();
+    loadingManager.requestLoadEnd()
   }
 
   async handleUrlUpdate() {

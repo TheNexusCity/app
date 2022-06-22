@@ -5,6 +5,7 @@ import classnames from 'classnames';
 import {RenderMirror} from './RenderMirror';
 import {RainFx} from './RainFx';
 import { AppContext } from '../../app';
+import { loadingManager } from '../../../../loading-manager';
 
 import styles from './zone-title-card.module.css';
 
@@ -31,10 +32,6 @@ export const ZoneTitleCard = () => {
                 setOpen(isOpen)
             }
         }
-        function webaverseloaded (e) {
-            const {isLoaded} = e.data;
-            setFullLoaded(isLoaded)
-        }
         function loadingscreenprogress(e) {
             const {progress} = e.data;
             if (progress !== undefined) {
@@ -43,13 +40,11 @@ export const ZoneTitleCard = () => {
                 setLoadProgress(loadProgress)
             }
         }
-        app.addEventListener('loadingscreenopen', loadingscreenopen);
-        app.addEventListener('webaverseloaded', webaverseloaded);
-        app.addEventListener('loadingscreenprogress', loadingscreenprogress);
+        loadingManager.addEventListener('loadingscreenopen', loadingscreenopen);
+        loadingManager.addEventListener('loadingscreenprogress', loadingscreenprogress);
         return () => {
-            app.removeEventListener('loadingscreenopen', loadingscreenopen);
-            app.removeEventListener('webaverseloaded', webaverseloaded);
-            app.removeEventListener('loadingscreenprogress', loadingscreenprogress);
+            loadingManager.removeEventListener('loadingscreenopen', loadingscreenopen);
+            loadingManager.removeEventListener('loadingscreenprogress', loadingscreenprogress);
         };
     }, []);
 

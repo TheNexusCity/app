@@ -47,7 +47,8 @@ import story from './story.js';
 import zTargeting from './z-targeting.js';
 import raycastManager from './raycast-manager.js';
 import {defaultPlayerSpec} from './constants';
-import logger from './logger.js';
+
+import {loadingManager} from './loading-manager';
 
 const localVector = new THREE.Vector3();
 const localVector2 = new THREE.Vector3();
@@ -79,17 +80,7 @@ export default class Webaverse extends EventTarget {
 
     story.listenHack();
 
-    this.totalAppCount = 0
-    this.loadedAppCount = 0
-    this.totalModuleCount = 0
-    this.loadedModuleCount = 0
-    this.appLoadedProgress = 0
-    this.moduleLoadedProgress = 0
-    this.isLoadStarted = true
     this.isModuleLoaded = false
-
-    this.loadModuleWeight = 50
-    this.loadAppWeight = 50
 
     const modulePromises = [
       physx.waitForLoad(),
@@ -110,39 +101,7 @@ export default class Webaverse extends EventTarget {
       await Promise.all(modulePromises);
     })();
 
-    
-
-    this.totalModuleCount = modulePromises.length
-
-    for (const p of modulePromises) {
-      p.then(() => {
-        this.loadedModuleCount++
-        logger.log(`${this.loadedModuleCount} of ${this.totalModuleCount} modules are loaded`)
-        webaverse.loadingScreenOpen(true)
-        this.calculateProgress()
-      });
-    }
-
-    window.addEventListener('loadingscreenopen', () => {
-      this.isLoadStarted = true
-      webaverse.loadingScreenOpen(true)
-    })
-
-    window.addEventListener('loadingscreenclosed', () => {
-      if (this.loadedAppCount === 0) {
-        webaverse.loadingScreenOpen(false)
-      }
-    })
-
-    window.addEventListener('importrackedappstarted', () => {
-      if (this.isLoadStarted) this.totalAppCount++
-    })
-
-    window.addEventListener('importrackedappended', () => {
-      if (this.isLoadStarted) this.loadedAppCount++
-      logger.log(`${this.loadedAppCount} of ${this.totalAppCount} apps are loaded`)
-      this.calculateProgress()
-    })
+    loadingManager.setModulePromises(modulePromises)
   }
 
   waitForLoad() {
@@ -225,30 +184,6 @@ export default class Webaverse extends EventTarget {
     } else {
       await session.end();
     }
-  }
-
-  loadingScreenProgress(progress) {
-    webaverse.dispatchEvent(new MessageEvent('loadingscreenprogress', {
-      data: {
-        progress,
-      },
-    }));
-  }
-
-  loadingScreenOpen(isOpen) {
-    webaverse.dispatchEvent(new MessageEvent('loadingscreenopen', {
-      data: {
-        isOpen,
-      },
-    }));
-  }
-
-  loadingScreenLoaded(isLoaded) {
-    webaverse.dispatchEvent(new MessageEvent('webaverseloaded', {
-      data: {
-        isLoaded
-      },
-    }));
   }
 
   // window.addEventListener('pushstate', pushstate);
@@ -363,44 +298,6 @@ export default class Webaverse extends EventTarget {
     }));
   }
 
-  calculateProgress() {
-    if (!this.isModuleLoaded) {
-      this.loadModuleWeight = 50
-      this.loadAppWeight = 50
-    } else {
-      this.loadModuleWeight = 0
-      this.loadAppWeight = 100
-    }
-    let progressApp = 0
-    let progressModule = 0
-
-    if (this.totalAppCount !== 0) {
-      progressApp = (this.loadedAppCount * this.loadAppWeight) / this.totalAppCount
-    }
-
-    if (this.totalModuleCount !== 0) {
-      progressModule = (this.loadedModuleCount * this.loadModuleWeight) / this.totalModuleCount
-    }
-
-    const progress = progressApp + progressModule
-      
-    webaverse.loadingScreenProgress(progress)
-
-    if (this.loadedAppCount >= this.totalAppCount && this.isModuleLoaded) {
-      webaverse.loadingScreenOpen(false)
-      webaverse.loadingScreenLoaded(true)
-      this.isLoadStarted = false
-      this.totalAppCount = 0
-      this.loadedAppCount = 0
-      this.totalModuleCount = 0
-      this.loadedModuleCount = 0
-    }
-  }
-
-  async loadModule() {
-    
-  }
-
   async start(canvas, universe = null) {
     this.bindInput();
     this.bindInterface();
@@ -500,8 +397,7 @@ export default class Webaverse extends EventTarget {
 
     renderer.setAnimationLoop(animate);
 
-    webaverse.loadingScreenOpen(true)
-    this.isLoadStarted = true
+    loadingManager.startLoading()
 
     await universe.handleUrlUpdate();
 
@@ -510,12 +406,13 @@ export default class Webaverse extends EventTarget {
 
     await this.waitForLoad()
     this.isModuleLoaded = true
+    loadingManager.setModuleLoaded(true)
 
     await playerSpecPromise
+
+    loadingManager.requestLoadEnd()
     
     _startHacks(this);
-    
-    this.loadModule()
   }
 }
 
@@ -685,7 +582,6 @@ const _startHacks = webaverse => {
       mikuModel.updateMatrixWorld();
     }
   }; */
-  webaverse.isLoadingScreenOpen = false;
   // let haloMeshApp = null;
   window.addEventListener('keydown', e => {
     if (e.which === 46) { // .
@@ -705,9 +601,6 @@ const _startHacks = webaverse => {
 
       // _ensureMikuModel();
       // _updateMikuModel();
-    } else if (e.which === 106) { // *
-      webaverse.isLoadingScreenOpen = !webaverse.isLoadingScreenOpen;
-      webaverse.loadingScreenOpen(webaverse.isLoadingScreenOpen)
     } else {
       const match = e.code.match(/^Numpad([0-9])$/);
       if (match) {
