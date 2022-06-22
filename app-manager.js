@@ -194,9 +194,7 @@ class AppManager extends EventTarget {
   async importTrackedApp(trackedApp) {
     logger.log('appManager.importTrackedApp', trackedApp)
     window.dispatchEvent(
-      new MessageEvent("importrackedappstarted", {
-        data: trackedApp,
-      })
+      new MessageEvent("importrackedappstarted")
     )
     const trackedAppBinding = trackedApp.toJSON();
     const {
@@ -282,22 +280,19 @@ class AppManager extends EventTarget {
         if (!mesh) {
           console.warn("failed to load object", { contentId });
         }
-
         this.addApp(app);
       }
 
       p.accept(app);
+      window.dispatchEvent(new MessageEvent("importrackedappended"))
       return app;
     } catch (err) {
+      window.dispatchEvent(new MessageEvent("importrackedappended"))
       p.reject(err);
     } finally {
       cleanup();
     }
-    window.dispatchEvent(
-      new MessageEvent("importrackedappended", {
-        data: trackedApp,
-      })
-    )
+    
   }
 
   getApps() {
@@ -458,7 +453,7 @@ class AppManager extends EventTarget {
   }
   addApp(app) {
     logger.log('appManager.addApp', app);
-
+    
     if (this.apps.includes(app)) return console.warn("Already has app", app)
     this.apps.push(app);
 

@@ -86,6 +86,7 @@ class Universe extends EventTarget {
     this.currentWorld = worldSpec;
 
     this.dispatchEvent(new MessageEvent('worldload'));
+    window.dispatchEvent(new MessageEvent('loadingscreenclosed'))
   }
 
   async reload() {

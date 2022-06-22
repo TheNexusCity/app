@@ -28,13 +28,11 @@ export const ZoneTitleCard = () => {
         function loadingscreenopen(e) {
             const {isOpen} = e.data;
             if (isOpen !== undefined) {
-                console.error('loadingscreenopen', isOpen)
                 setOpen(isOpen)
             }
         }
         function webaverseloaded (e) {
             const {isLoaded} = e.data;
-            console.error('webaverseloaded', isLoaded)
             setFullLoaded(isLoaded)
         }
         function loadingscreenprogress(e) {
@@ -42,7 +40,6 @@ export const ZoneTitleCard = () => {
             if (progress !== undefined) {
                 let loadProgress = (progress / 100) % 1
                 if (progress === 100) loadProgress = 1
-                console.error('loadingscreenprogress', progress)
                 setLoadProgress(loadProgress)
             }
         }

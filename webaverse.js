@@ -47,9 +47,7 @@ import story from './story.js';
 import zTargeting from './z-targeting.js';
 import raycastManager from './raycast-manager.js';
 import {defaultPlayerSpec} from './constants';
-
-import sceneNames from './scenes/scenes.json';
-import {parseQuery} from './util.js';
+import logger from './logger.js';
 
 const localVector = new THREE.Vector3();
 const localVector2 = new THREE.Vector3();
@@ -81,11 +79,17 @@ export default class Webaverse extends EventTarget {
 
     story.listenHack();
 
-    this.totalProgressCount = 0
-    this.loadedProgressCount = 0
+    this.totalAppCount = 0
+    this.loadedAppCount = 0
+    this.totalModuleCount = 0
+    this.loadedModuleCount = 0
+    this.appLoadedProgress = 0
+    this.moduleLoadedProgress = 0
     this.isLoadStarted = true
     this.isModuleLoaded = false
-    this.loadModules = []
+
+    this.loadModuleWeight = 50
+    this.loadAppWeight = 50
 
     const modulePromises = [
       physx.waitForLoad(),
@@ -102,29 +106,41 @@ export default class Webaverse extends EventTarget {
       WebaWallet.waitForLoad(),
     ]
 
-    this.loadModules = modulePromises
-
     this.loadPromise = (async () => {
       await Promise.all(modulePromises);
     })();
+
+    
+
+    this.totalModuleCount = modulePromises.length
+
+    for (const p of modulePromises) {
+      p.then(() => {
+        this.loadedModuleCount++
+        logger.log(`${this.loadedModuleCount} of ${this.totalModuleCount} modules are loaded`)
+        webaverse.loadingScreenOpen(true)
+        this.calculateProgress()
+      });
+    }
 
     window.addEventListener('loadingscreenopen', () => {
       this.isLoadStarted = true
       webaverse.loadingScreenOpen(true)
     })
 
-    window.addEventListener('importrackedappstarted', (load) => {
-      if (this.isLoadStarted) this.totalProgressCount++
-      console.error('this.totalAppCount', this.totalProgressCount)
+    window.addEventListener('loadingscreenclosed', () => {
+      if (this.loadedAppCount === 0) {
+        webaverse.loadingScreenOpen(false)
+      }
     })
 
-    window.addEventListener('importrackedappended', (load) => {
-      if (this.loadedProgressCount === 0 && !this.isModuleLoaded) {
-        // TODO: first app loaded, we can get correct app count
-        // this.loadModule()
-      }
-      if (this.isLoadStarted) this.loadedProgressCount++
-      console.error('this.loadedAppCount', this.loadedProgressCount)
+    window.addEventListener('importrackedappstarted', () => {
+      if (this.isLoadStarted) this.totalAppCount++
+    })
+
+    window.addEventListener('importrackedappended', () => {
+      if (this.isLoadStarted) this.loadedAppCount++
+      logger.log(`${this.loadedAppCount} of ${this.totalAppCount} apps are loaded`)
       this.calculateProgress()
     })
   }
@@ -348,14 +364,36 @@ export default class Webaverse extends EventTarget {
   }
 
   calculateProgress() {
-    if (this.totalProgressCount === 0) return
-    webaverse.loadingScreenProgress((this.loadedProgressCount * 100) / this.totalProgressCount)
-    if (this.loadedProgressCount >= this.totalProgressCount) {
+    if (!this.isModuleLoaded) {
+      this.loadModuleWeight = 50
+      this.loadAppWeight = 50
+    } else {
+      this.loadModuleWeight = 0
+      this.loadAppWeight = 100
+    }
+    let progressApp = 0
+    let progressModule = 0
+
+    if (this.totalAppCount !== 0) {
+      progressApp = (this.loadedAppCount * this.loadAppWeight) / this.totalAppCount
+    }
+
+    if (this.totalModuleCount !== 0) {
+      progressModule = (this.loadedModuleCount * this.loadModuleWeight) / this.totalModuleCount
+    }
+
+    const progress = progressApp + progressModule
+      
+    webaverse.loadingScreenProgress(progress)
+
+    if (this.loadedAppCount >= this.totalAppCount && this.isModuleLoaded) {
       webaverse.loadingScreenOpen(false)
       webaverse.loadingScreenLoaded(true)
       this.isLoadStarted = false
-      this.totalProgressCount = 0
-      this.loadedProgressCount = 0
+      this.totalAppCount = 0
+      this.loadedAppCount = 0
+      this.totalModuleCount = 0
+      this.loadedModuleCount = 0
     }
   }
 
@@ -463,15 +501,7 @@ export default class Webaverse extends EventTarget {
     renderer.setAnimationLoop(animate);
 
     webaverse.loadingScreenOpen(true)
-
-    this.totalProgressCount += this.loadModules.length
-    for (const p of this.loadModules) {
-      p.then(() => {
-        this.loadedProgressCount++
-        webaverse.loadingScreenOpen(true)
-        this.calculateProgress()
-      });
-    }
+    this.isLoadStarted = true
 
     await universe.handleUrlUpdate();
 
