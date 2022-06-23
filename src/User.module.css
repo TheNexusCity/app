@@ -201,7 +201,7 @@
 .userWrap {
   display: flex;
   position: absolute;
-  top: 8px;
+  top: 0;
   right: 0;
   margin-top: 10px;
   align-items: center;
@@ -219,13 +219,8 @@
   pointer-events: all;
   cursor: pointer;
 }
-
-.userBar .address.avatarPadRight {
-  padding-left: 60px;
-}
-
 .userBar .avatarUrl {
-  position: absolute;
+  position: relative;
   z-index: 1;
 }
 .userBar .avatarUrl .img {
