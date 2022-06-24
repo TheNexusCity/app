@@ -7,6 +7,7 @@ import styles from './CharacterHups.module.css';
 // import metaversefile from 'metaversefile';
 // const {useLocalPlayer} = metaversefile;
 import {chatTextSpeed} from '../constants.js';
+import metaversefile from 'metaversefile';
 
 // const localVector = new THREE.Vector3();
 // const localVector2 = new THREE.Vector3();
@@ -148,7 +149,7 @@ const CharacterHup = function(props) {
 export default function CharacterHups({
   localPlayer,
   npcs,
-  remotePlayers
+  remotePlayers = metaversefile.useRemotePlayers()
 }) {
   const [hups, setHups] = useState([]);
 
