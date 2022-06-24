@@ -23,6 +23,7 @@
 }
 
 .zoneTitleCard {
+  display: flex;
   position: fixed;
   top: 0;
   bottom: 0;
@@ -38,14 +39,19 @@
 }
 
 .zoneTitleCard:not(.open) {
-  transform: translateY(-100%);
+  /* transform: translateY(-100%); */
 }
 
-.zoneTitleCard .leftWing {
-  position: absolute;
+.zoneTitleCard .leftWingWrapper {
+  /* position: absolute; */
+  flex: 1 0 30%;
   display: flex;
-  flex-direction: column;
-  left: 10vw;
+  justify-content: center;
+  /* left: 10vw; */
+}
+.zoneTitleCard .leftWing {
+  display: flex;
+  flex-direction: column;  
   width: 300px;
 }
 .zoneTitleCard .leftWing .block {
@@ -70,11 +76,21 @@
   width: 300px;
   height: calc(300px / 341px * 120px);
 }
-
+.zoneTitleCard .mainSectionWrapper {
+  display: flex;
+  flex: 1 1 70%;
+}
+.zoneTitleCard .mainSection {
+  display: flex;
+  flex: 1 1;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
 .zoneTitleCard .rightSection {
   display: flex;
   flex-direction: column;
-  position: absolute;
+  /* position: absolute; */
   top: 30vh;
   right: 30vw;
 }
@@ -119,7 +135,7 @@
 }
 
 .zoneTitleCard .bottomSection {
-  position: absolute;
+  /* position: absolute; */
   left: 40vw;
   bottom: 150px;
   /* background-color: #FFF; */
@@ -142,7 +158,7 @@
   height: 26px;
 }
 .zoneTitleCard .bottomSection .loadingBar .loadProgress {
-  position: absolute;
+  /* position: absolute; */
   left: 51px;
   width: calc(100% - 51px * 2);
   bottom: 12px;
@@ -171,6 +187,15 @@
   background-size: 512px 100%;
   /* background-image: linear-gradient(to bottom, #56ab2f, #a8e063); */
   /* transition: background-color 1s cubic-bezier(0, 1, 0, 1); */
+}
+.overlay {
+  background-color: black;
+  z-index: 1000;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
 }
 
 .rainFx {
