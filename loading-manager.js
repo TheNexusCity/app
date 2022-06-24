@@ -30,10 +30,6 @@ class LoadingManager extends EventTarget {
     }
   }
 
-  setModuleLoaded (isModuleLoaded) {
-    this.isModuleLoaded = isModuleLoaded
-  }
-
   trackedAppAdded () {
     if (this.isLoadStarted) this.totalAppCount++
   }
@@ -65,8 +61,13 @@ class LoadingManager extends EventTarget {
     logger.log('load ended')
     this.loadingScreenProgress(100)
     setTimeout(() => {
+      this.loadingScreenFullLoaded()
       this.loadingScreenOpen(false)
     }, 3000)
+  }
+
+  loadingScreenFullLoaded() {
+    this.dispatchEvent(new MessageEvent('loadingscreenfullloaded'));
   }
 
   loadingScreenProgress(progress) {

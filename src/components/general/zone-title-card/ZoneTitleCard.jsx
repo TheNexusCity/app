@@ -44,24 +44,30 @@ export const ZoneTitleCard = () => {
                 setLoadProgress(loadProgress)
             }
         }
+        function loadingscreenfullloaded() {
+            setFullLoaded(true)
+        }
 
         document.fonts.ready.then(() => {
             setFontLoaded(true);
         });
 
-        loadingManager.addEventListener('loadingscreenopen', loadingscreenopen);
-        loadingManager.addEventListener('loadingscreenprogress', loadingscreenprogress);
+        
+        loadingManager.addEventListener('loadingscreenopen', loadingscreenopen)
+        loadingManager.addEventListener('loadingscreenprogress', loadingscreenprogress)
+        loadingManager.addEventListener('loadingscreenfullloaded', loadingscreenfullloaded)
         return () => {
             loadingManager.removeEventListener('loadingscreenopen', loadingscreenopen);
             loadingManager.removeEventListener('loadingscreenprogress', loadingscreenprogress);
+            loadingManager.removeEventListener('loadingscreenfullloaded', loadingscreenfullloaded)
         };
     }, []);
     useEffect(() => {
         if(isFontLoaded & isImageLoaded) setOverlay(false);
     }, [isFontLoaded, isImageLoaded])
     const title = 'Webaverse';
-    const description = 'Zone Description';
-    const comment = 'This is a zone comment.';
+    const description = 'Entering World';
+    const comment = '';
 
     return (
         <div className={ classnames(styles.zoneTitleCard, open ? styles.open : null) } >
