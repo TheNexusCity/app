@@ -49,7 +49,6 @@ import { murmurhash3 } from './procgen/murmurhash3.js';
 import musicManager from './music-manager.js';
 import { makeId, clone } from './util.js';
 import overrides from './overrides.js';
-import logger from './logger.js';
 
 const localVector = new THREE.Vector3();
 const localVector2 = new THREE.Vector3();
@@ -561,7 +560,7 @@ class Player extends THREE.Object3D {
             this.appManager.transplantApp(app, world.appManager);
           }
         } else {
-          logger.warn("need to transplant unowned app", app, this.appManager, world.appManager);
+          console.warn("need to transplant unowned app", app, this.appManager, world.appManager);
         }
       };
       _removeApp();
@@ -598,7 +597,7 @@ class Player extends THREE.Object3D {
     this.appManager.unbindState();
 
     this.playersArray = nextPlayersArray;
-    if (!this.playersArray) return logger.warn("this.playersArray is null")
+    if (!this.playersArray) return console.warn("this.playersArray is null")
 
     // note: leave the old state as is
     // it is the host's responsibility to garbage collect us when we disconnect.
@@ -705,7 +704,7 @@ class Player extends THREE.Object3D {
           avatar = null;
         }
 
-        if (!cancelFn.isLive()) return logger.warn("canceling the function");
+        if (!cancelFn.isLive()) return console.warn("canceling the function");
         this.avatar = avatar;
         loadPhysxCharacterController.call(this);
 
@@ -939,7 +938,7 @@ class LocalPlayer extends Player {
     return this.appManager.getAppByInstanceId(instanceId);
   }
   async setAvatarApp(app) {
-    if (!this.isLocalPlayer) return logger.warn("Calling setAvatarApp for remote player");
+    if (!this.isLocalPlayer) return console.warn("Calling setAvatarApp for remote player");
     world.appManager.transplantApp(app, this.appManager);
     this.setAvatarAppInternal(app);
   }
@@ -957,13 +956,13 @@ class LocalPlayer extends Player {
       if (app.instanceId && oldInstanceId !== app.instanceId) {
         avatar.set("instanceId", app.instanceId ?? "");
       } else {
-        logger.warn("Trying to set avatar app to same instanceId as before");
+        console.warn("Trying to set avatar app to same instanceId as before");
       }
     });
   }
   setMicMediaStream(mediaStream) {
     if (!this.avatar)
-      return logger.warn("Can't set mic media stream, no avatar");
+      return console.warn("Can't set mic media stream, no avatar");
     if (this.microphoneMediaStream) {
       this.microphoneMediaStream.disconnect();
       this.microphoneMediaStream = null;
@@ -1122,7 +1121,7 @@ class LocalPlayer extends Player {
   }
   update(timestamp, timeDiff, frame) {
     if (!this.avatar) {
-      return logger.warn("Not updating local player, no avatar")
+      return console.warn("Not updating local player, no avatar")
     }
     const session = _getSession();
     const mirrors = metaversefile.getMirrors();
@@ -1131,7 +1130,7 @@ class LocalPlayer extends Player {
 
     const timeDiffS = timeDiff / 1000;
 
-    this.characterSfx.update(timestamp, timeDiffS, this.getActionsState());
+    this.characterSfx.update(timestamp, timeDiffS);
     this.characterFx.update(timestamp, timeDiffS);
     this.characterHitter.update(timestamp, timeDiffS);
     this.characterBehavior.update(timestamp, timeDiffS);
@@ -1340,7 +1339,7 @@ class RemotePlayer extends Player {
     }
   }
   update(timestamp, timeDiff) {
-    if (!this.avatar) return logger.warn("Can't update remote player, avatar is null");
+    if (!this.avatar) return console.warn("Can't update remote player, avatar is null");
     const _updateInterpolation = () => {
       this.positionInterpolant.update(timeDiff);
       this.quaternionInterpolant.update(timeDiff);
@@ -1359,7 +1358,7 @@ class RemotePlayer extends Player {
     applyPlayerToAvatar(this, null, this.avatar, mirrors);
 
     const timeDiffS = timeDiff / 1000;
-    this.characterSfx.update(timestamp, timeDiffS, this.getActionsState());
+    this.characterSfx.update(timestamp, timeDiffS);
     this.characterFx.update(timestamp, timeDiffS);
     this.characterHitter.update(timestamp, timeDiffS);
     this.characterBehavior.update(timestamp, timeDiffS);
@@ -1438,7 +1437,7 @@ class RemotePlayer extends Player {
           lastPosition.copy(this.position);
 
         } else {
-          logger.warn("Unhandled event", e)
+          console.warn("Unhandled event", e)
         }
       }
     };

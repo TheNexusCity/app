@@ -85,7 +85,6 @@ const _makeKiHairMaterial = () => {
 class CharacterFx {
   constructor(player) {
     this.player = player;
-    this.isLocalPlayer = player.isLocalPlayer;
 
     // this.lastJumpState = false;
     // this.lastStepped = [false, false];

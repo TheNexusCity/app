@@ -90,10 +90,12 @@ class CharacterSfx {
       };
     }
   }
-  update(timestamp, timeDiffS, actions = []) {
+  update(timestamp, timeDiffS) {
     if (!this.player.avatar) {
       return;
     }
+
+    const actions = this.player.getActionsState();
 
     //check current actions has sit action
     let hasSitAction = false

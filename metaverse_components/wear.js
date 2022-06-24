@@ -35,7 +35,7 @@ export default (app, component) => {
     if (e.player) {
       player = e.player;
     } else {
-      console.error('no player!');
+      throw new Error('Trying to call wearupdate, but no player', e);
     }
     if (e.wear) {
       wearSpec = app.getComponent('wear');

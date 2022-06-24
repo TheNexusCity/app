@@ -5,8 +5,6 @@ player objects load their own avatar and apps using this binding */
 import * as Z from 'zjs';
 import {RemotePlayer} from './character-controller.js';
 import {getLocalPlayer} from './players.js';
-import metaversefileApi from 'metaversefile';
-import logger from './logger.js';
 class PlayersManager {
   constructor() {
     this.playersArray = null;
@@ -22,7 +20,7 @@ class PlayersManager {
   }
 
   unbindState() {
-    if (!this.playersArray) return logger.warn('unbindState function called but playersArray was null');
+    if (!this.playersArray) return console.warn('unbindState function called but playersArray was null');
     // console.log('unbind player observers', lastPlayers, new Error().stack);
     const playerSpecs = this.playersArray.toJSON();
     const nonLocalPlayerSpecs = playerSpecs.filter(p => {

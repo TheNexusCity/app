@@ -12,7 +12,6 @@ import { getLocalPlayer } from './players.js';
 import metaversefile from "metaversefile";
 import * as metaverseModules from "./metaverse-modules.js";
 import { jsonParse } from "./util.js";
-import logger from "./logger.js";
 import { applyPlayerToAvatar } from './player-avatar-binding.js';
 
 const localVector = new THREE.Vector3();
@@ -72,7 +71,7 @@ class AppManager extends EventTarget {
   }
   // Remove all the apps from remote players before calling unbindState
   unbindState() {
-    if (!this.unbindStateFn) return logger.warn("unbindState called but not bound");
+    if (!this.unbindStateFn) return console.warn("unbindState called but not bound");
     this.unbindStateFn();
     this.appsArray = null;
     this.unbindStateFn = null;
@@ -138,7 +137,7 @@ class AppManager extends EventTarget {
   }
   // Called on the remote player on construction
   async loadApps() {
-    if(this.isLocalPlayer) return logger.warn("Trying to call loadApps on local player");
+    if(this.isLocalPlayer) return console.warn("Trying to call loadApps on local player");
     for (let i = 0; i < this.appsArray.length; i++) {
       const trackedApp = this.appsArray.get(i, Z.Map);
       const app = await this.importTrackedApp(trackedApp);
@@ -148,7 +147,7 @@ class AppManager extends EventTarget {
   // Bind the tracked app to start listening for events
   // Especially transform updates
   bindTrackedApp(trackedApp, app) {
-    if(this.isLocalPlayer) return logger.warn("Cannot bind tracked app, local player is app owner");
+    if(this.isLocalPlayer) return console.warn("Cannot bind tracked app, local player is app owner");
     if(this.trackedAppBound(trackedApp.instanceId)) this.unbindTrackedApp(trackedApp.instanceId);
     const player = metaversefile.getPlayerByInstanceId(app.instanceId);
     const lastPosition = new THREE.Vector3();
@@ -213,7 +212,7 @@ class AppManager extends EventTarget {
           //}
         }
       } else {
-        logger.warn("tracked app key change", e)
+        console.warn("tracked app key change", e)
       }
     };
     trackedApp.observe(observeTrackedAppFn);
@@ -229,7 +228,7 @@ class AppManager extends EventTarget {
   }
   unbindTrackedApp(instanceId) {
     const fn = this.trackedAppUnobserveMap.get(instanceId);
-    if (!fn) return logger.warn("tracked app was not bound:", instanceId);
+    if (!fn) return console.warn("tracked app was not bound:", instanceId);
     this.trackedAppUnobserveMap.delete(instanceId);
     fn();
   }
@@ -327,7 +326,7 @@ class AppManager extends EventTarget {
         const mesh = await app.addModule(m);
         if (!live) return _bailout(app);
         if (!mesh) {
-          logger.warn("failed to load object", { contentId });
+          console.warn("failed to load object", { contentId });
         }
 
         this.addApp(app);
@@ -484,7 +483,7 @@ class AppManager extends EventTarget {
     if (removeIndex !== -1) {
       this.appsArray.delete(removeIndex, 1);
     } else {
-      logger.warn("invalid remove instance id", instanceId);
+      console.warn("invalid remove instance id", instanceId);
     }
   }
   removeTrackedApp(removeInstanceId) {
@@ -494,7 +493,7 @@ class AppManager extends EventTarget {
     });
   }
   addApp(app) {
-    if (this.apps.includes(app)) return logger.warn("Already has app", app)
+    if (this.apps.includes(app)) return console.warn("Already has app", app)
     this.apps.push(app);
 
     this.dispatchEvent(new MessageEvent("appadd", {data: app}));
@@ -538,7 +537,7 @@ class AppManager extends EventTarget {
   // Called when moving an app from one place to another
   // Especially in wear and unwear and when setting unwear on the character
   transplantApp(app, dstAppManager) {
-    if(this === dstAppManager) return logger.warn("Can't transplant app to itself");
+    if(this === dstAppManager) return console.warn("Can't transplant app to itself");
     const { instanceId } = app;
 
     this.unbindTrackedApp(instanceId);
@@ -623,7 +622,7 @@ class AppManager extends EventTarget {
 
   // called by local player, remote players and world update()
   update(timeDiff) {
-    if (!this.appsArray) return logger.warn("Can't push app updates because appsArray is null")
+    if (!this.appsArray) return console.warn("Can't push app updates because appsArray is null")
     const self = this;
       for (const app of self.apps) {
         const trackedApp = self.getTrackedApp(app.instanceId);
@@ -655,7 +654,7 @@ class AppManager extends EventTarget {
               trackedApp.set("transform", packed);
               console.log("updating")
             } else {
-              logger.warn("App is not a tracked app, not sending out transform")
+              console.warn("App is not a tracked app, not sending out transform")
             }
           };
           const localPlayer = getLocalPlayer();

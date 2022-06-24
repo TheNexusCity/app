@@ -513,7 +513,6 @@ const createPlayerDiorama = ({
     camera: sideCamera,
     // loaded: false,
     setTarget(newTarget) {
-      console.log("target is", target)
       target = newTarget;
     },
     setObjects(newObjects) {

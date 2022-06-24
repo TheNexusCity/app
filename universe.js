@@ -12,7 +12,6 @@ import {initialPosY} from './constants.js';
 import {parseQuery} from './util.js';
 import metaversefile from 'metaversefile';
 import sceneNames from './scenes/scenes.json';
-import logger from './logger.js';
 class Universe extends EventTarget {
   constructor() {
     super();
