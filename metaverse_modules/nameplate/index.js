@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import metaversefile from "metaversefile";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { getModelGeoMat } from "./model";
 // import * as BufferGeometryUtils from "three/examples/jsm/utils/BufferGeometryUtils.js";
 // import { getCaretAtPoint } from "troika-three-text";
 // import { inappPreviewHost } from "../../constants";
@@ -23,44 +24,18 @@ const gltfLoader = new GLTFLoader();
 const destroyForLocalPlayer = true;
 const height = 0.3;
 
-const getModelMesh = (model) => {
-  const group = new THREE.Group();
-  model.scene.traverse(function (child) {
-    if (child.isMesh) {
-      const instancedMesh = new THREE.InstancedMesh(
-        child.geometry,
-        child.material,
-        1
-      );
-      instancedMesh.matrixAutoUpdate = false;
-      switch (child.name) {
-        // case "User":
-        //   instancedMesh.setMatrixAt(
-        //     0,
-        //     new THREE.Matrix4()
-        //       .makeScale(0.1, 0.1, 0.1)
-        //       .setPosition(-0.38, 0.2, 0.01)
-        //   );
-        //   break;
-        case "Nameplate":
-          instancedMesh.setMatrixAt(0, new THREE.Matrix4().makeScale(3, 3, 3));
-          break;
-        default:
-          break;
-      }
-      instancedMesh.updateMatrix();
-      group.add(instancedMesh);
-    }
-  });
-  return group;
-};
-
 async function makeNameplateMesh({}) {
   const nameplateModelUrl = "./models/nameplate.glb";
   const nameplateModel = await new Promise((resolve, reject) => {
     gltfLoader.load(nameplateModelUrl, resolve, console.log, reject);
   });
-  return getModelMesh(nameplateModel);
+  const { geometry, material } = getModelGeoMat(nameplateModel);
+  console.log("nameplate_geometry", geometry);
+  const nameplateMesh = new THREE.Mesh(geometry, material);
+  // nameplateMesh.updateMatrix();
+  // nameplateMesh.updateMatrixWorld();
+  // nameplateMesh.matrixWorldNeedsUpdate = true;
+  return nameplateMesh;
 }
 
 async function makeTextMesh(
@@ -96,7 +71,6 @@ export default () => {
   const lastAppToCamera = new THREE.Vector3();
 
   (async () => {
-    const nameplateMesh = await makeNameplateMesh({});
     const font = "./fonts/GeosansLight.ttf";
     const fontSize = 0.18;
     const anchorX = "center";
@@ -111,6 +85,9 @@ export default () => {
       color
     );
     textMesh.position.set(0, 0.2, 0.001);
+
+    const nameplateMesh = await makeNameplateMesh({});
+    nameplateMesh.scale.set(4, 4, 4);
     nameplateMesh.add(textMesh);
     app.add(nameplateMesh);
   })();
@@ -126,15 +103,15 @@ export default () => {
     lastPosition.copy(app.position);
     // app and camera are both THREE.Object3D type
     // write a function the makes app face camera
-    const appToCamera = new THREE.Vector3().subVectors(
-      camera.position,
-      app.position
-    );
-    if (!lastAppToCamera.equals(appToCamera)) {
-      const appToCameraAngle = Math.atan2(appToCamera.x, appToCamera.z);
-      app.rotation.y = appToCameraAngle;
-      lastAppToCamera.copy(appToCamera);
-    }
+    // const appToCamera = new THREE.Vector3().subVectors(
+    //   camera.position,
+    //   app.position
+    // );
+    // if (!lastAppToCamera.equals(appToCamera)) {
+    //   const appToCameraAngle = Math.atan2(appToCamera.x, appToCamera.z);
+    //   app.rotation.y = appToCameraAngle;
+    //   lastAppToCamera.copy(appToCamera);
+    // }
     // name change
     // TODO: This should be an event listener
     app.player.name = "Test";
