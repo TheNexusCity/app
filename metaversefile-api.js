@@ -3,7 +3,7 @@ metaversefile uses plugins to load files from the metaverse and load them as app
 it is an interface between raw data and the engine.
 metaversfile can load many file types, including javascript.
 */
-import {getLocalPlayer, remotePlayers} from './players.js';
+
 import * as THREE from 'three';
 import {Text} from 'troika-three-text';
 import React from 'react';
@@ -23,8 +23,8 @@ import postProcessing from './post-processing.js';
 import {getRandomString, memoize} from './util.js';
 import * as mathUtils from './math-utils.js';
 import JSON6 from 'json-6';
-import * as geometries from './geometries.js';
 import * as materials from './materials.js';
+import * as geometries from './geometries.js';
 import meshLodManager from './mesh-lodder.js';
 import * as avatarCruncher from './avatar-cruncher.js';
 import * as avatarSpriter from './avatar-spriter.js';
@@ -34,6 +34,7 @@ import npcManager from './npc-manager.js';
 import mobManager from './mob-manager.js';
 import universe from './universe.js';
 import {PathFinder} from './npc-utils.js';
+import {getLocalPlayer, remotePlayers} from './players.js';
 import loaders from './loaders.js';
 import * as voices from './voices.js';
 import * as procgen from './procgen/procgen.js';
@@ -53,11 +54,9 @@ import particleSystemManager from './particle-system.js';
 import domRenderEngine from './dom-renderer.jsx';
 import dropManager from './drop-manager.js';
 import hitManager from './character-hitter.js';
-// import dcWorkerManager from './dc-worker-manager.js';
-import procGenManager from './procgen-manager.js';
+import dcWorkerManager from './dc-worker-manager.js';
 import cardsManager from './cards-manager.js';
-import * as instancing from './instancing.js';
-import * as atlasing from './atlasing.js';
+import * as geometryAllocators from './geometry-allocator.js';
 
 const localVector2D = new THREE.Vector2();
 
@@ -365,7 +364,7 @@ metaversefile.setApi({
     }
     // console.log('js import', s);
     try {
-      const m = await import(s);
+      const m = await import(/* @vite-ignore */s);
       return m;
     } catch(err) {
       console.warn('error loading', JSON.stringify(s), err.stack);
@@ -537,6 +536,9 @@ metaversefile.setApi({
   },
   useRemotePlayer(playerId) {
     let player = playersManager.remotePlayers.get(playerId);
+    /* if (!player) {
+      player = new RemotePlayer();
+    } */
     return player;
   },
   useRemotePlayers() {
@@ -1193,11 +1195,8 @@ export default () => {
   useGeometries() {
     return geometries;
   },
-  useInstancing() {
-    return instancing;
-  },
-  useAtlasing() {
-    return atlasing;
+  useGeometryAllocators() {
+    return geometryAllocators;
   },
   useMaterials() {
     return materials;
@@ -1223,8 +1222,8 @@ export default () => {
   useHitManager() {
     return hitManager;
   },
-  useProcGenManager() {
-    return procGenManager;
+  useDcWorkerManager() {
+    return dcWorkerManager;
   },
   useCardsManager() {
     return cardsManager;

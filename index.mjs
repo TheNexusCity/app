@@ -134,9 +134,9 @@ function makeId(length) {
   });
   app.use(viteServer.middlewares);
   
-  await new Promise((resolve, reject) => {
+  await new Promise((accept, reject) => {
     httpServer.listen(port, SERVER_ADDR, () => {
-      resolve();
+      accept();
     });
     httpServer.on('error', reject);
   });
@@ -150,14 +150,13 @@ function makeId(length) {
     }
   })();
   const initialRoomState = (() => {
-    const s = fs.readFileSync('./scenes/makersdistrict.scn', 'utf8');
+    const s = fs.readFileSync('./scenes/street_mp_testing.scn', 'utf8');
     const j = JSON.parse(s);
     const {objects} = j;
     
     const appsMapName = 'apps';
-
     const result = {
-        [appsMapName]: [],
+      [appsMapName]: [],
     };
     for (const object of objects) {
       let {start_url, type, content, position = [0, 0, 0], quaternion = [0, 0, 0, 1], scale = [1, 1, 1]} = object;
@@ -177,14 +176,16 @@ function makeId(length) {
     }
     return result;
   })();
-  const initialRoomNames = [];
+  const initialRoomNames = [
+    'Erithor',
+  ];
   wsrtc.bindServer(wsServer, {
     initialRoomState,
     initialRoomNames,
   });
-  await new Promise((resolve, reject) => {
+  await new Promise((accept, reject) => {
     wsServer.listen(wsPort, SERVER_ADDR, () => {
-      resolve();
+      accept();
     });
     wsServer.on('error', reject);
   });

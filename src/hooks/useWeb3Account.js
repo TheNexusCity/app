@@ -1,53 +1,71 @@
 import {useState, useEffect} from 'react';
-import {CHAINS, DEFAULT_CHAIN, WEB3_EVENTS} from './web3-constants';
+import {
+  CHAINS,
+  DEFAULT_CHAIN,
+} from './web3-constants';
 
 import {
   connectToNetwork,
   addRPCToWallet,
+  getChainId,
+  getConnectedAccounts,
   requestAccounts,
 } from './rpcHelpers';
-import {ethers} from 'ethers';
 
-
-
-const ACCOUNT_DATA = {
-  EMAIL: 'email',
-  AVATAR: 'avatar',
+const EVENTS = {
+  CHAIN_CHANGED: 'chainChanged',
+  ACCOUNTS_CHANGE: 'accountsChanged',
 };
 
-export default function useWeb3Account(currentChain = DEFAULT_CHAIN) {
+export default function useWeb3Account(NETWORK = DEFAULT_CHAIN) {
   const [accounts, setAccounts] = useState([]);
   const [currentAddress, setCurrentAddress] = useState('');
+  const [wrongChain, setWrongChain] = useState(false);
   const [errorMessage, setErrorMessage] = useState([]);
-  const [isConnected, setIsConnected] = useState(false);
+  const [currentChain, setCurrentChain] = useState(NETWORK);
 
-  useEffect(() => {
-    async function checkForAccounts() {
-      const accounts = await requestAccounts();
-      if (accounts.length > 0) {
-        setAccounts(accounts);
-        setCurrentAddress(accounts[0]);
-        setIsConnected(true);
+  const checkChain = (chainId) => {
+    if (chainId === currentChain.chainId) {
+      setWrongChain(false);
+    } else {
+      setWrongChain(true);
+    }
+  }
+
+  const checkIfWalletIsConnected = async () => {
+    try {
+      const {ethereum} = window;
+
+      if (!ethereum) {
+        setErrorMessage(p => [...p, 'Make sure you have metamask!']);
+        return;
       }
-    }
-    checkForAccounts();
-  }, [currentChain]);
 
-  const getProvider = () => {
-    const {ethereum} = window;
-    if (!ethereum) {
-      setErrorMessage(p => [...p, 'Make sure you have metamask!']);
-      return;
-    }
+      await connectToNetwork(currentChain);
 
-    return new ethers.providers.Web3Provider(window.ethereum);
+      const accounts = getConnectedAccounts();
+
+      if (accounts.length === 0) {
+        setErrorMessage(p => [...p, 'No authorized account found']);
+      }
+
+      setAccounts(accounts);
+      setCurrentAddress(accounts[0]);
+
+      const chainId = await getChainId();
+
+      checkChain(chainId); // checks the chain ID against the chain selected in metamask
+
+      setErrorMessage([]);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const getAccounts = async () => {
-    const accounts = await requestAccounts();
-    setCurrentAddress(accounts[0]);
-    return accounts[0];
-  }
+  const logoutWallet = () => {
+      setAccounts([]);
+      setCurrentAddress('');
+  };
 
   const connectWallet = async () => {
     try {
@@ -72,29 +90,25 @@ export default function useWeb3Account(currentChain = DEFAULT_CHAIN) {
     }
   };
 
-  const getAccountDetails = async (address = currentAddress) => {
-    const provider = getProvider();
-    var check = ethers.utils.getAddress(address);
-    try {
-      const name = await provider.lookupAddress(check);
-      if (!name) return {};
+  useEffect(() => {
+    checkIfWalletIsConnected();
+  }, []);
 
-      const resolver = await provider.getResolver(name);
+  useEffect(() => {
+    const handleChainChanged = async chainId => {
+      checkChain(chainId);
+    };
 
-      const accountDetails = {};
-
-      await Promise.all(
-        Object.keys(ACCOUNT_DATA).map(async key => {
-          const data = await resolver.getText(ACCOUNT_DATA[key]);
-          accountDetails[ACCOUNT_DATA[key]] = data;
-        }),
-      );
-
-      return {...accountDetails, name};
-    } catch (error) {
-      return {};
+    if (window.ethereum) {
+      window.ethereum.on(EVENTS.CHAIN_CHANGED, handleChainChanged);
     }
-  };
+
+    return () => {
+      if (window.ethereum) {
+        window.ethereum.removeListener(EVENTS.CHAIN_CHANGED, handleChainChanged);
+      }
+    };
+  }, [currentAddress]);
 
   useEffect(() => {
     const accountChanged = e => {
@@ -102,26 +116,31 @@ export default function useWeb3Account(currentChain = DEFAULT_CHAIN) {
     };
 
     if (window.ethereum) {
-      window.ethereum.on(WEB3_EVENTS.ACCOUNTS_CHANGE, accountChanged);
+      window.ethereum.on(EVENTS.ACCOUNTS_CHANGE, accountChanged);
     }
 
     return () => {
       if (window.ethereum) {
-        window.ethereum.removeListener(WEB3_EVENTS.ACCOUNTS_CHANGE, accountChanged);
+        window.ethereum.removeListener(EVENTS.ACCOUNTS_CHANGE, accountChanged);
       }
     };
   }, [currentAddress]);
+
+  function switchChain(chain) {
+    setCurrentChain(chain);
+    setWrongChain(false);
+  }
 
   return {
     accounts,
     currentAddress,
     errorMessage,
-    getAccounts,
     connectWallet,
+    logoutWallet,
+    checkIfWalletIsConnected,
+    wrongChain,
     addRPCToWallet,
     chains: CHAINS,
-    getAccountDetails,
-    getProvider,
-    isConnected,
+    switchChain,
   };
 }

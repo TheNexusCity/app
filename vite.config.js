@@ -8,9 +8,6 @@ export default defineConfig({
     metaversefilePlugin(),
     reactRefresh(),
   ],
-  build: {
-    target: 'esnext'
-  },
   optimizeDeps:{
     entries: [
       'src/*.js',

@@ -277,6 +277,7 @@ class AIScene {
       messages,
       nextCharacter,
     });
+    console.log('dialogue options prompt', {prompt});
     const stop = makeOptionsStop();
     let response = await this.generateFn(prompt, stop);
     console.log('dialogue options response', {prompt, response});
@@ -289,6 +290,7 @@ class AIScene {
       name,
       bio,
     });
+    console.log('dialogue options prompt', {prompt});
     const stop = makeCharacterIntroStop();
     let response = await this.generateFn(prompt, stop);
     console.log('dialogue options response', {prompt, response});

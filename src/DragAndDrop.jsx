@@ -1,25 +1,30 @@
-import classnames from 'classnames';
-import metaversefile from 'metaversefile';
-import React, { useContext, useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import cameraManager from '../camera-manager.js';
-import game from '../game.js';
-import { getRenderer } from '../renderer.js';
-import { getRandomString, handleBlobUpload, handleUpload } from '../util.js';
-import { world } from '../world.js';
-import { AppContext } from './components/app';
-import { registerIoEventHandler, unregisterIoEventHandler } from './components/general/io-handler/IoHandler.jsx';
-import NFTDetailsForm from './components/web3/NFTDetailsForm';
+import React, {useState, useEffect, useContext} from 'react';
+import classnames from 'classnames';
 import style from './DragAndDrop.module.css';
-import { ChainContext } from './hooks/chainProvider';
-import { isChainSupported } from './hooks/useChain';
+import {ThreeDots} from 'react-loader-spinner';
+import {world} from '../world.js';
+import {getRandomString, handleUpload} from '../util.js';
+import {registerIoEventHandler, unregisterIoEventHandler} from './components/general/io-handler/IoHandler.jsx';
+import {registerLoad} from './LoadingBox.jsx';
+import {ObjectPreview} from './ObjectPreview.jsx';
+import game from '../game.js';
+import {getRenderer} from '../renderer.js';
+import cameraManager from '../camera-manager.js';
+import metaversefile from 'metaversefile';
+import {AppContext} from './components/app';
+// import {ethers, BigNumber} from 'ethers';
+// import {NFTABI, FTABI} from './abis/contract';
+// import {NFTcontractAddress, FTcontractAddress} from './hooks/web3-constants.js';
+
+import {
+  ToastContainer,
+  toast,
+} from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import useNFTContract from './hooks/useNFTContract';
-import { GenericLoadingMessage, registerLoad } from './LoadingBox.jsx';
-import { ObjectPreview } from './ObjectPreview.jsx';
 
-const APP_3D_TYPES = ['glb', 'gltf', 'vrm'];
-
-const _upload = () => new Promise((resolve, reject) => {
+const _upload = () => new Promise((accept, reject) => {
   const input = document.createElement('input');
   input.type = 'file';
   // input.setAttribute('webkitdirectory', '');
@@ -91,14 +96,33 @@ const uploadCreateApp = async (item, {
 };
 
 const DragAndDrop = () => {
-  const {state, setState, account, chain} = useContext(AppContext);
+
+  const {state, setState, account} = useContext(AppContext);
   const [queue, setQueue] = useState([]);
   const [currentApp, setCurrentApp] = useState(null);
-  const {mintNFT, minting, error, setError} = useNFTContract(account.currentAddress);
-  const [mintComplete, setMintComplete] = useState(false);
-  const [previewImage, setPreviewImage] = useState(null);
-  const {selectedChain} = useContext(ChainContext);
-  const canvasRef = useRef(null);
+  const [mintBtnEnable, setMintBtnEnable] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { currentAddress, connectWallet, errorMessage, wrongChain } = account;
+
+  const notifymessage = (msg, type) => {
+    toast(msg, {
+      position: 'top-center',
+      autoClose: 4000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: false,
+      draggable: true,
+      progress: undefined,
+      type,
+      theme: 'dark',
+    });
+  };
+
+  const { mintNFT, minting } = useNFTContract(currentAddress, notifymessage, setCurrentApp, setIsLoading );
+
+  const isMetaMaskConnected = () => {
+    return !!currentAddress;
+  };
 
   useEffect(() => {
     function keydown(e) {
@@ -196,6 +220,8 @@ const DragAndDrop = () => {
   useEffect(async () => {
     if (queue.length > 0 && !currentApp) {
       const app = queue[0];
+      console.log('set app', app);
+
       setCurrentApp(app);
       setQueue(queue.slice(1));
       setState({openedPanel: null});
@@ -205,6 +231,11 @@ const DragAndDrop = () => {
       }
     }
   }, [queue, currentApp]);
+
+  useEffect(() => {
+    const connectedWallet = isMetaMaskConnected();
+    setMintBtnEnable(connectedWallet);
+  }, [currentAddress]);
 
   const _currentAppClick = e => {
     e.preventDefault();
@@ -243,17 +274,16 @@ const DragAndDrop = () => {
     }
   };
   const _mint = async e => {
+    if (!currentAddress) return false;
     e.preventDefault();
     e.stopPropagation();
+    setIsLoading(true);
+
+    console.log('mint', currentApp);
     if (currentApp) {
-      const app = currentApp;
-      await mintNFT(app, previewImage, () => {
-        setMintComplete(true);
-        setPreviewImage(null);
-        setCurrentApp(null);
-      });
+        const app = currentApp;
+        mintNFT(app);
     }
-    setCurrentApp(null);
   };
   const _cancel = e => {
     e.preventDefault();
@@ -265,114 +295,77 @@ const DragAndDrop = () => {
   const name = currentApp ? currentApp.name : '';
   const appType = currentApp ? currentApp.appType : '';
 
-  useEffect(() => {
-    if (mintComplete) {
-      setTimeout(() => {
-        setMintComplete(false);
-      }, 3000);
-    }
-  }, [mintComplete]);
-
-  useEffect(() => {
-    if (error) {
-      setTimeout(() => {
-        setError('');
-      }, 3000);
-    }
-  }, [error]);
-
-  async function createPreview() {
-    const filename = `${name}-preview.png`;
-    const type = 'upload';
-    canvasRef.current.toBlob(async function(blob) {
-      let load = null;
-      const previewURL = await handleBlobUpload(filename, blob, {
-        onTotal(total) {
-          load = registerLoad(type, filename, 0, total);
-        },
-        onProgress(e) {
-          if (load) {
-            load.update(e.loaded, e.total);
-          } else {
-            load = registerLoad(type, filename, e.loaded, e.total);
-          }
-        },
-      });
-
-      if (load) {
-        load.end();
-      }
-      setPreviewImage(previewURL);
-    });
-  }
-
-  useEffect(() => {
-    if (!currentApp) return;
-
-    if (APP_3D_TYPES.includes(currentApp.appType)) {
-      setTimeout(() => {
-        createPreview();
-      }, 3000);
-    }
-  }, [currentApp]);
 
   return (
-    <div className={style.dragAndDrop}>
-      <GenericLoadingMessage open={minting} name={'Minting'} detail={'Creating NFT...'}></GenericLoadingMessage>
-      <GenericLoadingMessage open={mintComplete} name={'Minting Complete'} detail={'Press [Tab] to use your inventory.'}></GenericLoadingMessage>
-      <GenericLoadingMessage open={error} name={'Error'} detail={error}></GenericLoadingMessage>
-      <div className={classnames(style.currentApp, currentApp ? style.open : null)} onClick={_currentAppClick}>
-        <h1 className={style.heading}>Upload object</h1>
-        <div className={style.body}>
-          <div style={{position: 'relative'}}>
-            {currentApp && APP_3D_TYPES.includes(currentApp.appType) && <button style={{position: 'absolute', top: 0, right: 0}} onClick={createPreview}>Take Preview</button>}
-            <ObjectPreview
-              ref={canvasRef}
-              object={currentApp}
-              className={style.canvas}
-              width={512}
-              height={512}
-            />
-          </div>
-          <div className={style.wrap}>
-            <div className={style.row}>
-              <NFTDetailsForm initialName={name} previewImage={previewImage} onChange={({name, details}) => {
-                if (currentApp) {
-                  currentApp.name = name;
-                  currentApp.description = details;
-                }
-              }} />
+    <>
+      <>
+        <div className={style.dragAndDrop}>
+          <div className={classnames(style.currentApp, currentApp ? style.open : null)} onClick={_currentAppClick}>
+            <h1 className={style.heading}>Upload object</h1>
+            <div className={style.body}>
+              <ObjectPreview object={currentApp} className={style.canvas} />
+              <div className={style.wrap}>
+                <div className={style.row}>
+                  <div className={style.label}>Name: </div>
+                  <div className={style.value}>{name}</div>
+                </div>
+                <div className={style.row}>
+                  <div className={style.label}>Type: </div>
+                  <div className={style.value}>{appType}</div>
+                </div>
+              </div>
             </div>
-            <div className={style.row}>
-              <div className={style.label}>Type: </div>
-              <div className={style.value}>{appType}</div>
-            </div>
-          </div>
-        </div>
-        <div className={style.footer}>
-          <div className={style.buttons}>
-            <div className={style.button} onClick={_drop}>
-              <span>Drop</span>
-              <sub>to world</sub>
-            </div>
-            <div className={style.button} onClick={_equip}>
-              <span>Equip</span>
-              <sub>to self</sub>
-            </div>
-            <div className={style.button} disabled={!isChainSupported(selectedChain) || !account.currentAddress} onClick={_mint}>
-              <span>Mint</span>
-              <sub>on {selectedChain.name}</sub>
-            </div>
-          </div>
-          <div className={style.buttons}>
-            <div className={classnames(style.button, style.small)} onClick={_cancel}>
-              <span>Cancel</span>
-              <sub>back to game</sub>
+            <div className={style.footer}>
+              <div className={style.buttons}>
+                <div className={style.button} onClick={_drop}>
+                  <span>Drop</span>
+                  <sub>to world</sub>
+                </div>
+                <div className={style.button} onClick={_equip}>
+                  <span>Equip</span>
+                  <sub>to self</sub>
+                </div>
+                <div className={style.button} disabled={!mintBtnEnable} onClick={_mint}>
+                  <span>Mint</span>
+                  <sub>on chain</sub>
+                </div>
+              </div>
+              <div className={style.buttons}>
+                <div className={classnames(style.button, style.small)} onClick={_cancel}>
+                  <span>Cancel</span>
+                  <sub>back to game</sub>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+        <ToastContainer
+          position="top-center"
+          autoClose={4000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+        />
+      </>
+      {
+        isLoading && <div
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            background: 'black',
+            opacity: 0.5,
+          }}
+        >
+          <ThreeDots color="#00BFFF" height={80} width={80} />
+        </div>
+      }
+    </>
   );
 };
 export {

@@ -1,4 +1,5 @@
-import React, {useEffect, useState, useRef} from 'react';
+
+import React, { useEffect, useRef } from 'react';
 import classnames from 'classnames';
 
 import { screenshotObjectApp } from '../../../../object-screenshotter';
@@ -7,45 +8,25 @@ import styles from './object-screenshot.module.css';
 
 //
 
-function useOnScreen(ref) {
-  const [isIntersecting, setIntersecting] = useState(false);
+export const ObjectScreenshot = ({ app, width, height, className = '' }) => {
 
-  const observer = new IntersectionObserver(
-    ([entry]) => setIntersecting(entry.isIntersecting),
-  );
+    const canvasRef = useRef( null );
 
-  useEffect(() => {
-    observer.observe(ref.current);
-    return () => { observer.disconnect(); };
-  }, []);
+    useEffect( async () => {
 
-  return isIntersecting;
-}
+        if ( ! canvasRef.current ) return;
+        const canvas = await screenshotObjectApp({ app, clearAlpha: 0, width, height });
+        canvasRef.current.innerHTML = "";
+        canvasRef.current.appendChild( canvas );
+    }, [ app ] );
 
-export const ObjectScreenshot = ({app, visible, width, height, className = ''}) => {
-  const canvasRef = useRef(null);
+    //
 
-  const [isScreenshotted, setIsScreenshotted] = useState(false);
+    return (
+        <div className={ classnames( className, styles.imgWrapper ) } >
+            <div ref={ canvasRef } width={ width } height={ height }></div>
+            <div className={ styles.background } />
+        </div>
+    );
 
-  const isVisible = useOnScreen(canvasRef);
-
-  useEffect(async () => {
-    if (!isVisible) return;
-    if (!canvasRef.current) return;
-    if (!isScreenshotted) {
-      const canvas = await screenshotObjectApp({app, clearAlpha: 0, width, height});
-      canvasRef.current.innerHTML = '';
-      canvasRef.current.appendChild(canvas);
-      setIsScreenshotted(true);
-    }
-  }, [app, isVisible]);
-
-  //
-
-  return (
-    <div className={ classnames(className, styles.imgWrapper) } >
-      <div ref={ canvasRef } width={ width } height={ height }></div>
-      <div className={ styles.background } />
-    </div>
-  );
 };

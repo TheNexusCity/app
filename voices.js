@@ -27,8 +27,12 @@ const loadPromise = (async () => {
 ].forEach(key => {
   overrides[key].addEventListener('change', async e => {
     const voicePackName = overrides.overrideVoicePack.get() ?? overrides.userVoicePack.get() ?? defaultVoicePackName;
+    console.log(('voicePackName', voicePackName));
     const voicePack = voices.voicePacks.find(vp => vp.name === voicePackName);
-    if (!voicePack) return console.warn(('key ', key, 'did not load voicePackName', voicePackName, 'this is probably fine but the root cause should be resolved'));
+    if (!voicePack) {
+      console.error(('voicePack', voicePack));
+      return;
+    }
     const {audioPath, indexPath} = voicePack;
 
     const voicePacksUrlBase = voicePacksUrl.replace(/\/+[^\/]+$/, '');
@@ -48,12 +52,13 @@ const loadPromise = (async () => {
 ].forEach(key => {
   overrides[key].addEventListener('change', async e => {
     const voiceEndpointName = overrides.overrideVoiceEndpoint.get() ?? overrides.userVoiceEndpoint.get() ?? defaultVoiceEndpoint;
+    console.log('voiceEndpointName', voiceEndpointName);
+    console.log('voices.voiceEndpoints', voices.voiceEndpoints);
     const voiceEndpoint = voices.voiceEndpoints.find(ve => ve.name === voiceEndpointName);
-    if (voiceEndpoint) {
-      getLocalPlayer().setVoiceEndpoint(voiceEndpoint.drive_id);
-    } else {
-      console.warn('Unable to set voice endpoint at start');
-    }
+    console.log('voiceEndpoint', voiceEndpoint);
+
+    const localPlayer = getLocalPlayer();
+    localPlayer.setVoiceEndpoint(voiceEndpoint.drive_id);
   });
 });
 

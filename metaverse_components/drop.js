@@ -18,6 +18,7 @@ const gracePickupTime = 1000;
 
 export default app => {
   const dropComponent = app.getComponent('drop');
+  debugger;
   if (dropComponent) {
     let rotY = 0;
 

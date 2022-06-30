@@ -1,13 +1,13 @@
 import * as THREE from 'three';
-import {VRMSpringBoneImporter} from '@pixiv/three-vrm/lib/three-vrm.module.js';
-import {fixSkeletonZForward} from './vrarmik/SkeletonUtils.js';
+import { VRMSpringBoneImporter } from '@pixiv/three-vrm/lib/three-vrm.module.js';
+import { fixSkeletonZForward } from './vrarmik/SkeletonUtils.js';
 import PoseManager from './vrarmik/PoseManager.js';
 import ShoulderTransforms from './vrarmik/ShoulderTransforms.js';
 import LegsManager from './vrarmik/LegsManager.js';
-import {scene, camera} from '../renderer.js';
+import { scene, camera } from '../renderer.js';
 import MicrophoneWorker from './microphone-worker.js';
-import {AudioRecognizer} from '../audio-recognizer.js';
-import {getAudioContext} from 'wsrtc/ws-audio-context.js';
+import { AudioRecognizer } from '../audio-recognizer.js';
+import { getAudioContext } from 'wsrtc/ws-audio-context.js';
 import {
   // angleDifference,
   // getVelocityDampingFactor,
@@ -1407,12 +1407,12 @@ class Avatar {
         break;
       }
       case 3: {
-        console.warn('Quality setting not implemented', quality); // XXX
+        console.log('not implemented'); // XXX
         this.model.visible = true;
         break;
       }
       case 4: {
-        console.warn('Quality setting not implemented', quality); // XXX
+        console.log('not implemented'); // XXX
         this.model.visible = true;
         break;
       }
@@ -2019,8 +2019,6 @@ class Avatar {
       const _volume = e => {
         if (!this.manuallySetMouth) {
           this.volume = this.volume * 0.8 + e.data * 0.2;
-        } else {
-          console.log("couldn't set mouth because it is being manually set")
         }
       }
 
@@ -2059,6 +2057,7 @@ class Avatar {
         }
   
         const _localBuffer = e => {
+          console.log("_localBuffer", e)
           this.audioRecognizer.send(e.data);
         }
 
@@ -2128,7 +2127,7 @@ class Avatar {
   } */
 
   destroy() {
-    // this.setAudioEnabled(false);
+    this.setAudioEnabled(false);
   }
 }
 Avatar.waitForLoad = () => loadPromise;

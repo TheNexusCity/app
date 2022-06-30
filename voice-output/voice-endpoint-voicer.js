@@ -53,8 +53,6 @@ class VoiceEndpointVoicer {
       return audioBuffer;
     } catch(err) {
       console.error('Failed to load the audio buffer', err);
-      const res = new ArrayBuffer()
-      return res;
     }
   }
   /* async loadAudioBuffer(text) {
@@ -99,41 +97,34 @@ class VoiceEndpointVoicer {
           console.log('bail on audio buffer');
           return;
         }
-        try {
-          const audioContext = Avatar.getAudioContext();
-          const audioBufferSourceNode = audioContext.createBufferSource();
-          audioBufferSourceNode.buffer = audioBuffer;
-          const ended = () => {
-            this.cancel = null;
-            this.running = false;
 
-            if (this.queue.length > 0) {
-              const text = this.queue.shift();
-              this.start(text);
-            } else {
-              _next();
-            }
-          };
-          audioBufferSourceNode.addEventListener('ended', ended, {once: true});
-          if (!this.player.avatar.audioWorker) {
-            this.player.avatar.setAudioEnabled(true);
+        const audioContext = Avatar.getAudioContext();
+        const audioBufferSourceNode = audioContext.createBufferSource();
+        audioBufferSourceNode.buffer = audioBuffer;
+        const ended = () => {
+          this.cancel = null;
+          this.running = false;
+
+          if (this.queue.length > 0) {
+            const text = this.queue.shift();
+            this.start(text);
+          } else {
+            _next();
           }
-          audioBufferSourceNode.connect(this.player.avatar.getAudioInput());
-          audioBufferSourceNode.start();
-  
-          cancelFns.push(() => {
-            audioBufferSourceNode.removeEventListener('ended', ended);
-  
-            audioBufferSourceNode.stop();
-            audioBufferSourceNode.disconnect();
-          });
-          
-        } catch (error) {
-          console.log("Voiceendpoint voicer error", error)
-          this.stop();
-          this.endPromise = null;
-          endPromise.accept();
+        };
+        audioBufferSourceNode.addEventListener('ended', ended, {once: true});
+        if (!this.player.avatar.microphoneWorker) {
+          this.player.avatar.setAudioEnabled(true);
         }
+        audioBufferSourceNode.connect(this.player.avatar.getAudioInput());
+        audioBufferSourceNode.start();
+
+        cancelFns.push(() => {
+          audioBufferSourceNode.removeEventListener('ended', ended);
+
+          audioBufferSourceNode.stop();
+          audioBufferSourceNode.disconnect();
+        });
       })();
     } else {
       this.queue.push(text);

@@ -5,7 +5,7 @@ usually, code starts here and is migrated to an appropriate manager.
 */
 
 import * as THREE from 'three';
-// import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import physx from './physx.js';
 import cameraManager from './camera-manager.js';
 import ioManager from './io-manager.js';
@@ -24,8 +24,6 @@ import npcManager from './npc-manager.js';
 import raycastManager from './raycast-manager.js';
 import zTargeting from './z-targeting.js';
 import Avatar from './avatars/avatars.js';
-import metaversefile from 'metaversefile';
-const {useRemotePlayers} = metaversefile;
 
 const localVector = new THREE.Vector3();
 const localVector2 = new THREE.Vector3();
@@ -115,7 +113,6 @@ function updateGrabbedObject(
   if (handSnap) {
     snapPosition(o, gridSnap);
     o.quaternion.setFromEuler(o.savedRotation);
-    o.updateMatrixWorld();
   } else {
     o.quaternion.copy(localQuaternion3);
   }
@@ -128,6 +125,7 @@ function updateGrabbedObject(
 const _getCurrentGrabAnimation = () => {
   let currentAnimation = '';
   const localPlayer = getLocalPlayer();
+
   const wearComponent = grabUseMesh.targetApp.getComponent('wear');
   if (wearComponent && wearComponent.grabAnimation === 'pick_up') {
     currentAnimation = wearComponent.grabAnimation;
@@ -192,198 +190,198 @@ const _getCurrentGrabAnimation = () => {
   return currentAnimation;
 };
 
-// const _makeTargetMesh = (() => {
-//   const targetMeshGeometry = (() => {
-//     const targetGeometry = BufferGeometryUtils.mergeBufferGeometries([
-//       new THREE.BoxBufferGeometry(0.03, 0.2, 0.03).applyMatrix4(
-//         new THREE.Matrix4().makeTranslation(0, -0.1, 0)
-//       ),
-//       new THREE.BoxBufferGeometry(0.03, 0.2, 0.03)
-//         .applyMatrix4(
-//           new THREE.Matrix4().makeRotationFromQuaternion(
-//             new THREE.Quaternion().setFromUnitVectors(
-//               new THREE.Vector3(0, -1, 0),
-//               new THREE.Vector3(0, 0, 1)
-//             )
-//           )
-//         )
-//         .applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, 0.1)),
-//       new THREE.BoxBufferGeometry(0.03, 0.2, 0.03)
-//         .applyMatrix4(
-//           new THREE.Matrix4().makeRotationFromQuaternion(
-//             new THREE.Quaternion().setFromUnitVectors(
-//               new THREE.Vector3(0, -1, 0),
-//               new THREE.Vector3(1, 0, 0)
-//             )
-//           )
-//         )
-//         .applyMatrix4(new THREE.Matrix4().makeTranslation(0.1, 0, 0)),
-//     ]);
-//     return BufferGeometryUtils.mergeBufferGeometries([
-//       targetGeometry
-//         .clone()
-//         .applyMatrix4(new THREE.Matrix4().makeTranslation(-0.5, 0.5, -0.5)),
-//       targetGeometry
-//         .clone()
-//         .applyMatrix4(
-//           new THREE.Matrix4().makeRotationFromQuaternion(
-//             new THREE.Quaternion().setFromUnitVectors(
-//               new THREE.Vector3(0, 0, -1),
-//               new THREE.Vector3(0, -1, 0)
-//             )
-//           )
-//         )
-//         .applyMatrix4(new THREE.Matrix4().makeTranslation(-0.5, -0.5, -0.5)),
-//       targetGeometry
-//         .clone()
-//         .applyMatrix4(
-//           new THREE.Matrix4().makeRotationFromQuaternion(
-//             new THREE.Quaternion().setFromUnitVectors(
-//               new THREE.Vector3(0, 1, 0),
-//               new THREE.Vector3(0, 0, 1)
-//             )
-//           )
-//         )
-//         .applyMatrix4(new THREE.Matrix4().makeTranslation(-0.5, 0.5, 0.5)),
-//       targetGeometry
-//         .clone()
-//         .applyMatrix4(
-//           new THREE.Matrix4().makeRotationFromQuaternion(
-//             new THREE.Quaternion().setFromUnitVectors(
-//               new THREE.Vector3(0, 1, 0),
-//               new THREE.Vector3(1, 0, 0)
-//             )
-//           )
-//         )
-//         .applyMatrix4(new THREE.Matrix4().makeTranslation(0.5, 0.5, -0.5)),
-//       targetGeometry
-//         .clone()
-//         .applyMatrix4(
-//           new THREE.Matrix4().makeRotationFromQuaternion(
-//             new THREE.Quaternion().setFromUnitVectors(
-//               new THREE.Vector3(0, 1, 0),
-//               new THREE.Vector3(1, 0, 0)
-//             )
-//           )
-//         )
-//         .applyMatrix4(
-//           new THREE.Matrix4().makeRotationFromQuaternion(
-//             new THREE.Quaternion().setFromUnitVectors(
-//               new THREE.Vector3(0, 1, 0),
-//               new THREE.Vector3(0, 0, 1)
-//             )
-//           )
-//         )
-//         .applyMatrix4(new THREE.Matrix4().makeTranslation(0.5, 0.5, 0.5)),
-//       targetGeometry
-//         .clone()
-//         .applyMatrix4(
-//           new THREE.Matrix4().makeRotationFromQuaternion(
-//             new THREE.Quaternion().setFromUnitVectors(
-//               new THREE.Vector3(0, 1, 0),
-//               new THREE.Vector3(0, 0, 1)
-//             )
-//           )
-//         )
-//         .applyMatrix4(
-//           new THREE.Matrix4().makeRotationFromQuaternion(
-//             new THREE.Quaternion().setFromUnitVectors(
-//               new THREE.Vector3(-1, 0, 0),
-//               new THREE.Vector3(0, -1, 0)
-//             )
-//           )
-//         )
-//         .applyMatrix4(new THREE.Matrix4().makeTranslation(-0.5, -0.5, 0.5)),
-//       targetGeometry
-//         .clone()
-//         .applyMatrix4(
-//           new THREE.Matrix4().makeRotationFromQuaternion(
-//             new THREE.Quaternion().setFromUnitVectors(
-//               new THREE.Vector3(0, 1, 0),
-//               new THREE.Vector3(1, 0, 0)
-//             )
-//           )
-//         )
-//         .applyMatrix4(
-//           new THREE.Matrix4().makeRotationFromQuaternion(
-//             new THREE.Quaternion().setFromUnitVectors(
-//               new THREE.Vector3(1, 0, 0),
-//               new THREE.Vector3(0, -1, 0)
-//             )
-//           )
-//         )
-//         .applyMatrix4(new THREE.Matrix4().makeTranslation(0.5, -0.5, -0.5)),
-//       targetGeometry
-//         .clone()
-//         .applyMatrix4(
-//           new THREE.Matrix4().makeRotationFromQuaternion(
-//             new THREE.Quaternion().setFromUnitVectors(
-//               new THREE.Vector3(-1, 1, 0).normalize(),
-//               new THREE.Vector3(1, 1, 0).normalize()
-//             )
-//           )
-//         )
-//         .applyMatrix4(
-//           new THREE.Matrix4().makeRotationFromQuaternion(
-//             new THREE.Quaternion().setFromUnitVectors(
-//               new THREE.Vector3(0, -1, 0).normalize(),
-//               new THREE.Vector3(0, 0, -1).normalize()
-//             )
-//           )
-//         )
-//         .applyMatrix4(
-//           new THREE.Matrix4().makeRotationFromQuaternion(
-//             new THREE.Quaternion().setFromUnitVectors(
-//               new THREE.Vector3(-1, 0, 0).normalize(),
-//               new THREE.Vector3(0, 1, 0).normalize()
-//             )
-//           )
-//         )
-//         .applyMatrix4(new THREE.Matrix4().makeTranslation(0.5, -0.5, 0.5)),
-//     ]); // .applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0.5, 0));
-//   })();
-//   const targetVsh = `
-//     #define M_PI 3.1415926535897932384626433832795
-//     uniform float uTime;
-//     // varying vec2 vUv;
-//     void main() {
-//       float f = 1.0 + sign(uTime) * pow(sin(abs(uTime) * M_PI), 0.5) * 0.2;
-//       gl_Position = projectionMatrix * modelViewMatrix * vec4(position * f, 1.);
-//     }
-//   `;
-//   const targetFsh = `
-//     uniform float uHighlight;
-//     uniform float uTime;
+const _makeTargetMesh = (() => {
+  const targetMeshGeometry = (() => {
+    const targetGeometry = BufferGeometryUtils.mergeBufferGeometries([
+      new THREE.BoxBufferGeometry(0.03, 0.2, 0.03).applyMatrix4(
+        new THREE.Matrix4().makeTranslation(0, -0.1, 0)
+      ),
+      new THREE.BoxBufferGeometry(0.03, 0.2, 0.03)
+        .applyMatrix4(
+          new THREE.Matrix4().makeRotationFromQuaternion(
+            new THREE.Quaternion().setFromUnitVectors(
+              new THREE.Vector3(0, -1, 0),
+              new THREE.Vector3(0, 0, 1)
+            )
+          )
+        )
+        .applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, 0.1)),
+      new THREE.BoxBufferGeometry(0.03, 0.2, 0.03)
+        .applyMatrix4(
+          new THREE.Matrix4().makeRotationFromQuaternion(
+            new THREE.Quaternion().setFromUnitVectors(
+              new THREE.Vector3(0, -1, 0),
+              new THREE.Vector3(1, 0, 0)
+            )
+          )
+        )
+        .applyMatrix4(new THREE.Matrix4().makeTranslation(0.1, 0, 0)),
+    ]);
+    return BufferGeometryUtils.mergeBufferGeometries([
+      targetGeometry
+        .clone()
+        .applyMatrix4(new THREE.Matrix4().makeTranslation(-0.5, 0.5, -0.5)),
+      targetGeometry
+        .clone()
+        .applyMatrix4(
+          new THREE.Matrix4().makeRotationFromQuaternion(
+            new THREE.Quaternion().setFromUnitVectors(
+              new THREE.Vector3(0, 0, -1),
+              new THREE.Vector3(0, -1, 0)
+            )
+          )
+        )
+        .applyMatrix4(new THREE.Matrix4().makeTranslation(-0.5, -0.5, -0.5)),
+      targetGeometry
+        .clone()
+        .applyMatrix4(
+          new THREE.Matrix4().makeRotationFromQuaternion(
+            new THREE.Quaternion().setFromUnitVectors(
+              new THREE.Vector3(0, 1, 0),
+              new THREE.Vector3(0, 0, 1)
+            )
+          )
+        )
+        .applyMatrix4(new THREE.Matrix4().makeTranslation(-0.5, 0.5, 0.5)),
+      targetGeometry
+        .clone()
+        .applyMatrix4(
+          new THREE.Matrix4().makeRotationFromQuaternion(
+            new THREE.Quaternion().setFromUnitVectors(
+              new THREE.Vector3(0, 1, 0),
+              new THREE.Vector3(1, 0, 0)
+            )
+          )
+        )
+        .applyMatrix4(new THREE.Matrix4().makeTranslation(0.5, 0.5, -0.5)),
+      targetGeometry
+        .clone()
+        .applyMatrix4(
+          new THREE.Matrix4().makeRotationFromQuaternion(
+            new THREE.Quaternion().setFromUnitVectors(
+              new THREE.Vector3(0, 1, 0),
+              new THREE.Vector3(1, 0, 0)
+            )
+          )
+        )
+        .applyMatrix4(
+          new THREE.Matrix4().makeRotationFromQuaternion(
+            new THREE.Quaternion().setFromUnitVectors(
+              new THREE.Vector3(0, 1, 0),
+              new THREE.Vector3(0, 0, 1)
+            )
+          )
+        )
+        .applyMatrix4(new THREE.Matrix4().makeTranslation(0.5, 0.5, 0.5)),
+      targetGeometry
+        .clone()
+        .applyMatrix4(
+          new THREE.Matrix4().makeRotationFromQuaternion(
+            new THREE.Quaternion().setFromUnitVectors(
+              new THREE.Vector3(0, 1, 0),
+              new THREE.Vector3(0, 0, 1)
+            )
+          )
+        )
+        .applyMatrix4(
+          new THREE.Matrix4().makeRotationFromQuaternion(
+            new THREE.Quaternion().setFromUnitVectors(
+              new THREE.Vector3(-1, 0, 0),
+              new THREE.Vector3(0, -1, 0)
+            )
+          )
+        )
+        .applyMatrix4(new THREE.Matrix4().makeTranslation(-0.5, -0.5, 0.5)),
+      targetGeometry
+        .clone()
+        .applyMatrix4(
+          new THREE.Matrix4().makeRotationFromQuaternion(
+            new THREE.Quaternion().setFromUnitVectors(
+              new THREE.Vector3(0, 1, 0),
+              new THREE.Vector3(1, 0, 0)
+            )
+          )
+        )
+        .applyMatrix4(
+          new THREE.Matrix4().makeRotationFromQuaternion(
+            new THREE.Quaternion().setFromUnitVectors(
+              new THREE.Vector3(1, 0, 0),
+              new THREE.Vector3(0, -1, 0)
+            )
+          )
+        )
+        .applyMatrix4(new THREE.Matrix4().makeTranslation(0.5, -0.5, -0.5)),
+      targetGeometry
+        .clone()
+        .applyMatrix4(
+          new THREE.Matrix4().makeRotationFromQuaternion(
+            new THREE.Quaternion().setFromUnitVectors(
+              new THREE.Vector3(-1, 1, 0).normalize(),
+              new THREE.Vector3(1, 1, 0).normalize()
+            )
+          )
+        )
+        .applyMatrix4(
+          new THREE.Matrix4().makeRotationFromQuaternion(
+            new THREE.Quaternion().setFromUnitVectors(
+              new THREE.Vector3(0, -1, 0).normalize(),
+              new THREE.Vector3(0, 0, -1).normalize()
+            )
+          )
+        )
+        .applyMatrix4(
+          new THREE.Matrix4().makeRotationFromQuaternion(
+            new THREE.Quaternion().setFromUnitVectors(
+              new THREE.Vector3(-1, 0, 0).normalize(),
+              new THREE.Vector3(0, 1, 0).normalize()
+            )
+          )
+        )
+        .applyMatrix4(new THREE.Matrix4().makeTranslation(0.5, -0.5, 0.5)),
+    ]); // .applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0.5, 0));
+  })();
+  const targetVsh = `
+    #define M_PI 3.1415926535897932384626433832795
+    uniform float uTime;
+    // varying vec2 vUv;
+    void main() {
+      float f = 1.0 + sign(uTime) * pow(sin(abs(uTime) * M_PI), 0.5) * 0.2;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position * f, 1.);
+    }
+  `;
+  const targetFsh = `
+    uniform float uHighlight;
+    uniform float uTime;
     
-//     const vec3 c = vec3(${new THREE.Color(0x29b6f6).toArray().join(", ")});
+    const vec3 c = vec3(${new THREE.Color(0x29b6f6).toArray().join(", ")});
     
-//     void main() {
-//       float f = max(1.0 - sign(uTime) * pow(abs(uTime), 0.5), 0.1);
-//       gl_FragColor = vec4(vec3(c * f * uHighlight), 1.0);
-//     }
-//   `;
-//   return (p) => {
-//     const geometry = targetMeshGeometry;
-//     const material = new THREE.ShaderMaterial({
-//       uniforms: {
-//         uHighlight: {
-//           value: 0,
-//           needsUpdate: true,
-//         },
-//         uTime: {
-//           value: 0,
-//           needsUpdate: true,
-//         },
-//       },
-//       vertexShader: targetVsh,
-//       fragmentShader: targetFsh,
-//       // transparent: true,
-//     });
-//     const mesh = new THREE.Mesh(geometry, material);
-//     mesh.frustumCulled = false;
-//     return mesh;
-//   };
-// })();
+    void main() {
+      float f = max(1.0 - sign(uTime) * pow(abs(uTime), 0.5), 0.1);
+      gl_FragColor = vec4(vec3(c * f * uHighlight), 1.0);
+    }
+  `;
+  return (p) => {
+    const geometry = targetMeshGeometry;
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        uHighlight: {
+          value: 0,
+          needsUpdate: true,
+        },
+        uTime: {
+          value: 0,
+          needsUpdate: true,
+        },
+      },
+      vertexShader: targetVsh,
+      fragmentShader: targetFsh,
+      // transparent: true,
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.frustumCulled = false;
+    return mesh;
+  };
+})();
 const _makeHighlightPhysicsMesh = (material) => {
   const geometry = new THREE.BoxBufferGeometry(1, 1, 1);
   material = material.clone();
@@ -627,7 +625,6 @@ Promise.resolve().then(_gameInit);
 
 let lastActivated = false;
 let lastThrowing = false;
-
 const _gameUpdate = (timestamp, timeDiff) => {
   const now = timestamp;
   const renderer = getRenderer();
@@ -723,7 +720,6 @@ const _gameUpdate = (timestamp, timeDiff) => {
     if (pickUpAction) {
       const {instanceId} = pickUpAction;
       const app = metaversefileApi.getAppByInstanceId(instanceId);
-      if(!app){ return console.error ("App not found when picking up`")}
 
       const _removeApp = () => {
         if (app.parent) {
@@ -773,37 +769,15 @@ const _gameUpdate = (timestamp, timeDiff) => {
 
   const _handlePhysicsHighlight = () => {
     highlightedPhysicsObject = null;
+
     if (gameManager.editMode) {
       const {position, quaternion} = renderer.xr.getSession() ? localPlayer.leftHand : camera;
-
       const collision = physx.physxWorker.raycastPhysics(physx.physics, position, quaternion);
       if (collision) {
         const physicsId = collision.objectId;
         highlightedPhysicsObject =
           metaversefileApi.getAppByPhysicsId(physicsId);
-        
-        if (!highlightedPhysicsObject) return
-
-        let isGrabbed = false
-        //TODO: check remote player's grab
-        const remotePlayers = useRemotePlayers();
-        for (const player of remotePlayers) {
-          const grabActions = Array.from(player.getActionsState()).filter(
-            (action) => action.type === "grab"
-          );
-          for (const grabAction of grabActions) {
-            const instanceId = grabAction.instanceId;
-            if (instanceId == highlightedPhysicsObject.instanceId) {
-              isGrabbed = true
-            }
-          }
-        }
-        if (isGrabbed) {
-          highlightedPhysicsObject = null
-          highlightedPhysicsId = 0;
-        } else {
-          highlightedPhysicsId = physicsId;
-        }
+        highlightedPhysicsId = physicsId;
       }
     }
   };
@@ -833,7 +807,6 @@ const _gameUpdate = (timestamp, timeDiff) => {
         highlightPhysicsMesh.visible = true;
         highlightPhysicsMesh.updateMatrixWorld();
       }
-      physicsObject.updateMatrixWorld();
     }
   };
   _updatePhysicsHighlight();
@@ -881,7 +854,6 @@ const _gameUpdate = (timestamp, timeDiff) => {
         
         // update matrix
         {
-          // console.log("_updateMouseSelect update matrix")
           localMatrix2
             .copy(physicsMesh.matrixWorld)
             // .premultiply(localMatrix3.copy(mouseSelectedObject.matrixWorld).invert())
@@ -1258,6 +1230,18 @@ const _gameUpdate = (timestamp, timeDiff) => {
     isMouseUp = false;
   };
   _updateUse();
+};
+const _pushAppUpdates = () => {
+  world.appManager.pushAppUpdates();
+  
+  const remotePlayers = metaversefileApi.useRemotePlayers(); // Might have to be removed too
+  for (const remotePlayer of remotePlayers) {
+    remotePlayer.appManager.pushAppUpdates();
+  }
+};
+const _pushPlayerUpdates = () => {
+  const localPlayer = getLocalPlayer();
+  localPlayer.pushPlayerUpdates();
 };
 
 const rotationSnap = Math.PI / 6;
@@ -1958,6 +1942,8 @@ class GameManager extends EventTarget {
     // console.log('got scene', scene);
   }
   update = _gameUpdate;
+  pushAppUpdates = _pushAppUpdates;
+  pushPlayerUpdates = _pushPlayerUpdates;
 }
 const gameManager = new GameManager();
 export default gameManager;

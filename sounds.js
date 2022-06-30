@@ -82,7 +82,7 @@ const playSoundName = name => {
   if (snds) {
     const sound = snds[Math.floor(Math.random() * snds.length)];
     if (!sound) {
-      console.error("Couldn't play", name, 'sound is null in ', snds);
+      debugger;
     }
     playSound(sound);
     return true;

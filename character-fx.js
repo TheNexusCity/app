@@ -85,7 +85,6 @@ const _makeKiHairMaterial = () => {
 class CharacterFx {
   constructor(player) {
     this.player = player;
-    this.isLocalPlayer = player.isLocalPlayer;
 
     // this.lastJumpState = false;
     // this.lastStepped = [false, false];
@@ -235,20 +234,19 @@ class CharacterFx {
 
     this.lastSSS = isSSS;
     const _updateSonicBoomMesh = () => {
-      if ( !this.sonicBoom  && !this.player.isNpcPlayer ) {
+      if ( !this.sonicBoom ) {
         this.sonicBoom = metaversefile.createApp();
-        this.sonicBoom.player = this.player;
         (async () => {
           const {modules} = metaversefile.useDefaultModules();
           const m = modules['sonicBoom'];
           await this.sonicBoom.addModule(m);
-          sceneLowPriority.add(this.sonicBoom);
         })();
+        sceneLowPriority.add(this.sonicBoom);
       }
     };
     _updateSonicBoomMesh();
     const _updateNameplate = () => {
-      if(!this.nameplate && !this.player.isNpcPlayer){
+      if ( !this.nameplate ) {
         (async () => {
         this.nameplate = metaversefile.createApp();
         this.nameplate.player = this.player;
@@ -256,6 +254,7 @@ class CharacterFx {
           const m = modules['nameplate'];
           await this.nameplate.addModule(m);
           sceneLowPriority.add(this.nameplate);
+          console.log("created app")
         })();
       }
     };

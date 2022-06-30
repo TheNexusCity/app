@@ -14,8 +14,9 @@ import musicManager from '../../../../music-manager.js';
 import { CachedLoader } from '../../../CachedLoader.jsx';
 import { RpgText } from '../../../RpgText.jsx';
 import { chatTextSpeed } from '../../../../constants.js';
-import { VoiceEndpointVoicer, getVoiceEndpointUrl} from '../../../../voice-output/voice-endpoint-voicer.js';
+import { VoiceEndpointVoicer } from '../../../../voice-output/voice-endpoint-voicer.js';
 import * as voices from '../../../../voices.js';
+import {getVoiceEndpointUrl} from '../../../../voice-output/voice-endpoint-voicer.js';
 
 //
 
@@ -151,7 +152,6 @@ export const CharacterSelect = () => {
     const [ arrowPosition, setArrowPosition ] = useState(null);
     const [ enabled, setEnabled ] = useState(false);
     const [ npcPlayer, setNpcPlayer ] = useState(null);
-    const [ npcApp, setNpcApp ] = useState(null);
     const [ npcLoader, setNpcLoader ] = useState(() => new CachedLoader({
         loadFn: async (url, targetCharacter, {signal = null} = {}) => {
             let live = true;
@@ -162,7 +162,6 @@ export const CharacterSelect = () => {
             const npcApp = await metaversefile.createAppAsync({
                 start_url: typeContentToUrl('application/npc', targetCharacter),
             });
-            setNpcApp(npcApp);
             return npcApp.npcPlayer;
         },
     }));
@@ -172,7 +171,7 @@ export const CharacterSelect = () => {
             signal.addEventListener('abort', () => {
               live = false;
             });
-            const themeSong = await LocalPlayer.fetchThemeSong(targetCharacter.themeSongUrl);
+            themeSong = await LocalPlayer.fetchThemeSong(targetCharacter.themeSongUrl);
             if (!live) return;
             return themeSong;
         },
@@ -394,7 +393,6 @@ export const CharacterSelect = () => {
                     const {preloadedOnSelectMessage} = result;
 
                     npcPlayer && npcPlayer.voicer.stop();
-                    npcApp && npcApp.destroy();
                     const localPlayer = metaversefile.useLocalPlayer();
                     localPlayer.voicer.stop();
                     await chatManager.waitForVoiceTurn(() => {

@@ -48,6 +48,7 @@ const CharacterHup = function(props) {
         });
         diorama.addCanvas(canvas);
         chatDioramas.set(player, {diorama, avatar});
+        console.log("Creating new diorama for player", player)
         // console.log('no diorama');
       }
 
@@ -76,13 +77,13 @@ const CharacterHup = function(props) {
     }
   }, [hupRef, localOpen, hups, hups.length]);
   useEffect(() => {
-    // console.log('set full text', hup);
+    console.log('set full text', hup);
     setFullText(hup.fullText);
   }, []);
   useEffect(() => {
     // console.log('effect 3', hup);
     function voicestart(e) {
-      console.log('voice start', hup.fullText, e.data, e.data.fullText);
+      // console.log('voice start', hup.fullText, e.data, e.data.fullText);
       setLocalOpen(true);
       setFullText(e.data.fullText);
     }
@@ -155,42 +156,37 @@ export default function CharacterHups({
   useEffect(() => {
     function hupadd(e) {
       const newHups = hups.concat([e.data.hup]);
-      // console.log('new hups', newHups);
+      console.log('new hups from jsx', newHups);
       setHups(newHups);
     }
 
-
-    function hupremove(e) {
+    /* function hupremove(e) {
       const oldHup = e.data.hup;
       const index = hups.indexOf(oldHup);
       const newHups = hups.slice();
       newHups.splice(index, 1);
-      oldHup.destroy();
       setHups(newHups);
-    }
-
+    } */
     localPlayer.characterHups.addEventListener('hupadd', hupadd);
-    localPlayer.characterHups.addEventListener('hupremove', hupremove);
+    // localPlayer.characterHups.addEventListener('hupremove', hupremove);
     for (const npcPlayer of npcs) {
       npcPlayer.characterHups.addEventListener('hupadd', hupadd);
-      npcPlayer.characterHups.addEventListener('hupremove', hupremove);
+      // npcPlayer.characterHups.addEventListener('hupremove', hupremove);
     }
 
     for (const remotePlayer of remotePlayers) {
       remotePlayer.characterHups.addEventListener('hupadd', hupadd)
-      remotePlayer.characterHups.addEventListener('hupremove', hupremove)
     }
 
     return () => {
       localPlayer.characterHups.removeEventListener('hupadd', hupadd);
-      localPlayer.characterHups.removeEventListener('hupremove', hupremove);
+      // localPlayer.characterHups.removeEventListener('hupremove', hupremove);
       for (const npcPlayer of npcs) {
         npcPlayer.characterHups.removeEventListener('hupadd', hupadd);
-        npcPlayer.characterHups.removeEventListener('hupremove', hupremove);
+        // npcPlayer.characterHups.removeEventListener('hupremove', hupremove);
       }
       for (const remotePlayer of remotePlayers) {
         remotePlayer.characterHups.removeEventListener('hupadd', hupadd)
-        localPlayer.characterHups.removeEventListener('hupremove', hupremove);
       }
     };
   }, [localPlayer, npcs, remotePlayers, hups]);

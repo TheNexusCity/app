@@ -145,7 +145,7 @@
 
 /* */
 
-.object {
+.item {
   --size: 80px;
   
   display: flex;
@@ -155,8 +155,8 @@
   cursor: pointer;
   user-select: none;
 }
-.object .background,
-.object .highlight
+.item .background,
+.item .highlight
 {
   position: absolute;
   width: var(--size);
@@ -164,70 +164,53 @@
   border-radius: 1000px;
   transform-origin: 50% 50%;
 }
-.object .background {
+.item .background {
   background-color: #111;
 }
-.object .highlight {
+.item .highlight {
   background-color: #FFF;
   transform: scale(0, 0);
   transition: transform 0.3s cubic-bezier(0, 1, 0, 1);
 }
-.object:hover .highlight,
-.object.selected .highlight
+.item:hover .highlight,
+.item.selected .highlight
 {
   transform: none;
 }
-.object:active .highlight,
-.object:active .background
+.item:active .highlight,
+.item:active .background
 {
   transform: scale(0.9, 0.9);
 }
-.object.selected .highlight {
+.item.selected .highlight {
   background-image: radial-gradient(#7e57c2, #512da8);
 }
-.object.highlighted {
-  background-image: linear-gradient(to bottom, #ff7043, #e64a19);
-}
-.object.highlighted .background {
-  background-color: #7e57c2;
-}
-.object .canvas,
-.object .name,
-.object .level {
+.item .canvas,
+.item .name,
+.item .level {
   pointer-events: none;
 }
-.object .canvas {
+.item .canvas {
   position: relative;
   width: var(--size);
   height: var(--size);
 }
-.object .row {
+.item .row {
   display: flex;
   align-items: baseline;
 }
-.object .name,
-.object .level
+.item .name,
+.item .level
 {
   font-family: 'PlazaRegular';
 }
-.object .name {
+.item .name {
   margin-right: auto;
   font-size: 18px;
 }
-.object .level {
+.item .level {
   font-size: 13px;
   color: #666;
-}
-
-/* */
-
-.land {
-  
-}
-.land .canvas {
-  --size: 300px;
-  width: var(--size);
-  height: var(--size);
 }
 
 /* */

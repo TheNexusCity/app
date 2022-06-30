@@ -1,8 +1,8 @@
-import * as preauthenticator from 'https://preauthenticator.webaverse.online/preauthenticator.js';
+// import * as preauthenticator from 'https://preauthenticator.webaverse.online/preauthenticator.js';
 
 let port = null;
 const loadPromise = (async () => {
-  port = await preauthenticator.connect();
+//   port = await preauthenticator.connect();
 })();
 
 const o = {

@@ -24,6 +24,7 @@ class DropManager extends EventTarget {
     voucher = 'fakeVoucher', // XXX should really throw if no voucher
   }) {
     // const r = () => (-0.5+Math.random())*2;
+      debugger;
     const dropComponent = {
       key: 'drop',
       value: {

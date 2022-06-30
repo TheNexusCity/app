@@ -1,39 +1,25 @@
-import * as THREE from "three";
-import metaversefile from "metaversefile";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { getModelGeoMat } from "./model";
-import { Matrix4 } from "three";
+import * as THREE from 'three';
+// import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+// import easing from './easing.js';
+import metaversefile from 'metaversefile';
+// import {getCaretAtPoint} from 'troika-three-text';
+const {useApp, useCamera, useLocalPlayer, useInternals, useMaterials, useFrame, /* usePhysics, */ useText} = metaversefile;
 
-const { useApp, useCamera, useLocalPlayer, useMaterials, useFrame, useText } =
-  metaversefile;
+const localVector4D = new THREE.Vector4();
 
+const {WebaverseShaderMaterial} = useMaterials();
 const Text = useText();
-const gltfLoader = new GLTFLoader();
-let nameplateMesh = null;
 
-async function createNameplateMesh() {
-  if (nameplateMesh) return;
-  const nameplateModelUrl = "./models/nameplate.glb";
-  const nameplateModel = await new Promise((resolve, reject) => {
-    gltfLoader.load(nameplateModelUrl, resolve, () => {}, reject);
-  });
-  const { geometry, material } = getModelGeoMat(nameplateModel);
-  nameplateMesh = new THREE.InstancedMesh(geometry, material, 1000);
-}
+const destroyForLocalPlayer = true;
+const height = 0.6;
 
-const createNameplateInstance = () => {
-  if (!nameplateMesh) return 0;
-  if (!nameplateMesh.instanceIndex) nameplateMesh.instanceIndex = 0;
-  return nameplateMesh.instanceIndex++;
-};
-
-async function getTextMesh(
-  text = "",
-  font = "./fonts/Plaza Regular.ttf",
+async function makeTextMesh(
+  text = '',
+  font = './fonts/Plaza Regular.ttf',
   fontSize = 0.75,
-  anchorX = "left",
-  anchorY = "middle",
-  color = 0x000000
+  anchorX = 'left',
+  anchorY = 'middle',
+  color = 0x000000,
 ) {
   const textMesh = new Text();
   textMesh.text = text;
@@ -43,82 +29,59 @@ async function getTextMesh(
   textMesh.anchorX = anchorX;
   textMesh.anchorY = anchorY;
   textMesh.frustumCulled = false;
-  await new Promise((resolve) => {
+  await new Promise(resolve => {
     textMesh.sync(resolve);
   });
   return textMesh;
 }
 
-export default () => {
+export default e => {
   const app = useApp();
-  const localPlayer = useLocalPlayer();
-  // if (app.player === localPlayer) return app;
   const camera = useCamera();
-  let textGroup = null;
-  let lastPlateToCamera = new THREE.Vector3();
-  let instIndex = -1;
-  let plateToCameraAngle = 0;
-
+  const localPlayer = useLocalPlayer();
+  // do something with this
+  const destroy = () => {
+    textMesh.geometry.dispose();
+    scene.remove(app);
+    this.destroy()
+  };
+  if (destroyForLocalPlayer && app.player === localPlayer) return destroy();
+  let name = app.player.name;
+  const {/* renderer, */scene/*, camera */} = useInternals();
+  let textMesh = null;
+  // const physics = usePhysics();
   (async () => {
-    if (!nameplateMesh) {
-      await createNameplateMesh();
-      app.add(nameplateMesh);
-    }
-    instIndex = createNameplateInstance();
-    const font = "./fonts/GeosansLight.ttf";
-    const fontSize = 0.2;
-    const anchorX = "center";
-    const anchorY = "top";
-    const color = 0xffffff;
-    const textMesh = await getTextMesh(
-      app.player.name,
-      font,
-      fontSize,
-      anchorX,
-      anchorY,
-      color
-    );
-    textMesh.position.set(0, 0, 0.001);
-    textMesh.updateMatrixWorld(true);
-    textGroup = new THREE.Group();
-    textGroup.add(textMesh);
-    app.add(textGroup);
+    const font = './fonts/GeosansLight.ttf';
+    const fontSize = 0.25;
+    const anchorX = 'center';
+    const anchorY = 'top';
+    const color = 0xFFFF00;
+
+    textMesh = await makeTextMesh(name, font, fontSize, anchorX, anchorY, color);
+    app.add(textMesh);
+    app.text = textMesh;
+
+    textMesh.updateMatrixWorld();
   })();
 
   useFrame(() => {
-    if (!app.player || instIndex < 0 || !textGroup) return;
-    let nameplateMatrix = new THREE.Matrix4();
-    nameplateMesh.getMatrixAt(instIndex, nameplateMatrix);
-    const plateToCamera = new THREE.Vector3().subVectors(
-      camera.position,
-      new THREE.Vector3().setFromMatrixPosition(nameplateMatrix)
-    );
-    if (!lastPlateToCamera.equals(plateToCamera)) {
-      plateToCameraAngle = Math.atan2(plateToCamera.x, plateToCamera.z);
-      lastPlateToCamera.copy(plateToCamera);
+    if (!textMesh || !app.player) return;
+    app.position.set(app.player.position.x, app.player.position.y + height, app.player.position.z);
+
+    // app and camera are both THREE.Object3D type
+    // write a function the makes app face camera
+    const appToCamera = new THREE.Vector3().subVectors(camera.position, app.position);
+    const appToCameraAngle = Math.atan2(appToCamera.x, appToCamera.z);
+    app.rotation.y = appToCameraAngle;
+    app.updateMatrixWorld();
+
+    // name change
+    // TODO: This should be an event listener
+    if (name !== app.player.name) {
+      name = app.player.name;
+      textMesh.text = name;
+      textMesh.sync();
     }
-    nameplateMatrix.copy(
-      new Matrix4()
-        .multiplyMatrices(
-          new Matrix4().makeScale(4, 4, 4),
-          new Matrix4().makeRotationY(plateToCameraAngle)
-        )
-        .setPosition(
-          app.player.position.x,
-          app.player.position.y + 0.3,
-          app.player.position.z
-        )
-    );
-    nameplateMesh.setMatrixAt(instIndex, nameplateMatrix);
-    nameplateMesh.instanceMatrix.needsUpdate = true;
-    textGroup.position.set(
-      app.player.position.x,
-      app.position.y + 1.98,
-      app.player.position.z
-    );
-    textGroup.rotation.y = plateToCameraAngle;
-    textGroup.updateMatrixWorld(true);
-    app.updateMatrixWorld(true);
   });
 
   return app;

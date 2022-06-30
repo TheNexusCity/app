@@ -31,6 +31,7 @@ export const SceneMenu = ({
   const [rooms, setRooms] = useState([]);
   const [micEnabled, setMicEnabled] = useState(false);
   const [speechEnabled, setSpeechEnabled] = useState(false);
+  const [roomScene, setRoomScene] = React.useState('Erithor');
   const [roomName, setRoomName] = React.useState(_makeName);
   const [sceneInputName, setSceneInputName] = useState(selectedScene);
   const [scenesList, setScenesList] = useState(origSceneList);
@@ -88,7 +89,7 @@ export const SceneMenu = ({
     // Show textfield with already setup room name
     // Get the values to these here
 
-    const sceneName = selectedScene.trim();
+    const sceneName = roomScene;
     const data = null; // Z.encodeStateAsUpdate( world.getState( true ) );
 
     const res = await fetch(universe.getWorldsHost() + roomName, {
