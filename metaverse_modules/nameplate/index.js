@@ -9,7 +9,6 @@ const { useApp, useCamera, useLocalPlayer, useMaterials, useFrame, useText } =
 
 const Text = useText();
 const gltfLoader = new GLTFLoader();
-const height = 0.3;
 let nameplateMesh = null;
 
 async function createNameplateMesh() {
@@ -55,7 +54,7 @@ export default () => {
   const localPlayer = useLocalPlayer();
   // if (app.player === localPlayer) return app;
   const camera = useCamera();
-  let textMesh = null;
+  let textGroup = null;
   let lastPlateToCamera = new THREE.Vector3();
   let instIndex = -1;
   let plateToCameraAngle = 0;
@@ -67,11 +66,11 @@ export default () => {
     }
     instIndex = createNameplateInstance();
     const font = "./fonts/GeosansLight.ttf";
-    const fontSize = 0.06;
+    const fontSize = 0.2;
     const anchorX = "center";
     const anchorY = "top";
     const color = 0xffffff;
-    textMesh = await getTextMesh(
+    const textMesh = await getTextMesh(
       app.player.name,
       font,
       fontSize,
@@ -79,16 +78,15 @@ export default () => {
       anchorY,
       color
     );
-    let box = new THREE.Box3().setFromObject(textMesh);
-    let boundingBoxSize = box.max.sub(box.min);
-    let height = boundingBoxSize.y;
-    textMesh.position.set(0, height * 1.001, 0.001);
-    app.add(textMesh);
-    app.add(new THREE.AxesHelper(10));
+    textMesh.position.set(0, 0, 0.001);
+    textMesh.updateMatrixWorld(true);
+    textGroup = new THREE.Group();
+    textGroup.add(textMesh);
+    app.add(textGroup);
   })();
 
   useFrame(() => {
-    if (!app.player || instIndex < 0) return;
+    if (!app.player || instIndex < 0 || !textGroup) return;
     let nameplateMatrix = new THREE.Matrix4();
     nameplateMesh.getMatrixAt(instIndex, nameplateMatrix);
     const plateToCamera = new THREE.Vector3().subVectors(
@@ -107,13 +105,20 @@ export default () => {
         )
         .setPosition(
           app.player.position.x,
-          app.player.position.y + height,
+          app.player.position.y + 0.3,
           app.player.position.z
         )
     );
     nameplateMesh.setMatrixAt(instIndex, nameplateMatrix);
     nameplateMesh.instanceMatrix.needsUpdate = true;
-    textMesh.geometry.applyMatrix4(nameplateMatrix);
+    textGroup.position.set(
+      app.player.position.x,
+      app.position.y + 1.98,
+      app.player.position.z
+    );
+    textGroup.rotation.y = plateToCameraAngle;
+    textGroup.updateMatrixWorld(true);
+    app.updateMatrixWorld(true);
   });
 
   return app;
