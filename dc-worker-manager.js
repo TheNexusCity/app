@@ -10,7 +10,7 @@ import {GeometryAllocator} from './geometry-allocator.js';
 
 const numWorkers = 4;
 
-class DcWorkerManager {
+export class DcWorkerManager {
   constructor({
     chunkSize = defaultChunkSize,
     // seed = defaultWorldSeed,
