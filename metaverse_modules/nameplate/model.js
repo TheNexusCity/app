@@ -53,3 +53,11 @@ export const getModelGeoMat = (model) => {
     material: newMaterials,
   };
 };
+
+export const getBoundingBox = (mesh) => {
+  const boundingBox = new THREE.Box3();
+  boundingBox.copy(mesh.geometry.boundingBox);
+  mesh.updateMatrixWorld(true);
+  boundingBox.applyMatrix4(mesh.matrixWorld);
+  return boundingBox;
+};

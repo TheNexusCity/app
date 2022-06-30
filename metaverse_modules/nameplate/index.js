@@ -2,43 +2,33 @@ import * as THREE from "three";
 import metaversefile from "metaversefile";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { getModelGeoMat } from "./model";
-// import * as BufferGeometryUtils from "three/examples/jsm/utils/BufferGeometryUtils.js";
-// import { getCaretAtPoint } from "troika-three-text";
-// import { inappPreviewHost } from "../../constants";
+import { Matrix4 } from "three";
 
-const {
-  useApp,
-  useCamera,
-  useLocalPlayer,
-  useMaterials,
-  useFrame,
-  useText,
-  // useInternals,
-  // usePhysics,
-} = metaversefile;
+const { useApp, useCamera, useLocalPlayer, useMaterials, useFrame, useText } =
+  metaversefile;
 
-const localVector4D = new THREE.Vector4();
-const { WebaverseShaderMaterial } = useMaterials();
 const Text = useText();
 const gltfLoader = new GLTFLoader();
-const destroyForLocalPlayer = true;
 const height = 0.3;
+let nameplateMesh = null;
 
-async function makeNameplateMesh({}) {
+async function createNameplateMesh() {
+  if (nameplateMesh) return;
   const nameplateModelUrl = "./models/nameplate.glb";
   const nameplateModel = await new Promise((resolve, reject) => {
-    gltfLoader.load(nameplateModelUrl, resolve, console.log, reject);
+    gltfLoader.load(nameplateModelUrl, resolve, () => {}, reject);
   });
   const { geometry, material } = getModelGeoMat(nameplateModel);
-  console.log("nameplate_geometry", geometry);
-  const nameplateMesh = new THREE.Mesh(geometry, material);
-  // nameplateMesh.updateMatrix();
-  // nameplateMesh.updateMatrixWorld();
-  // nameplateMesh.matrixWorldNeedsUpdate = true;
-  return nameplateMesh;
+  nameplateMesh = new THREE.InstancedMesh(geometry, material, 1000);
 }
 
-async function makeTextMesh(
+const createNameplateInstance = () => {
+  if (!nameplateMesh) return 0;
+  if (!nameplateMesh.instanceIndex) nameplateMesh.instanceIndex = 0;
+  return nameplateMesh.instanceIndex++;
+};
+
+async function getTextMesh(
   text = "",
   font = "./fonts/Plaza Regular.ttf",
   fontSize = 0.75,
@@ -66,60 +56,64 @@ export default () => {
   // if (app.player === localPlayer) return app;
   const camera = useCamera();
   let textMesh = null;
-  let name = app.player.name;
-  const lastPosition = new THREE.Vector3();
-  const lastAppToCamera = new THREE.Vector3();
+  let lastPlateToCamera = new THREE.Vector3();
+  let instIndex = -1;
+  let plateToCameraAngle = 0;
 
   (async () => {
+    if (!nameplateMesh) {
+      await createNameplateMesh();
+      app.add(nameplateMesh);
+    }
+    instIndex = createNameplateInstance();
     const font = "./fonts/GeosansLight.ttf";
-    const fontSize = 0.18;
+    const fontSize = 0.06;
     const anchorX = "center";
     const anchorY = "top";
     const color = 0xffffff;
-    textMesh = await makeTextMesh(
-      name,
+    textMesh = await getTextMesh(
+      app.player.name,
       font,
       fontSize,
       anchorX,
       anchorY,
       color
     );
-    textMesh.position.set(0, 0.2, 0.001);
-
-    const nameplateMesh = await makeNameplateMesh({});
-    nameplateMesh.scale.set(4, 4, 4);
-    nameplateMesh.add(textMesh);
-    app.add(nameplateMesh);
+    let box = new THREE.Box3().setFromObject(textMesh);
+    let boundingBoxSize = box.max.sub(box.min);
+    let height = boundingBoxSize.y;
+    textMesh.position.set(0, height * 1.001, 0.001);
+    app.add(textMesh);
+    app.add(new THREE.AxesHelper(10));
   })();
 
   useFrame(() => {
-    if (!textMesh || !app.player) return;
-    app.updateMatrixWorld();
-    app.position.set(
-      app.player.position.x,
-      app.player.position.y + height,
-      app.player.position.z
+    if (!app.player || instIndex < 0) return;
+    let nameplateMatrix = new THREE.Matrix4();
+    nameplateMesh.getMatrixAt(instIndex, nameplateMatrix);
+    const plateToCamera = new THREE.Vector3().subVectors(
+      camera.position,
+      new THREE.Vector3().setFromMatrixPosition(nameplateMatrix)
     );
-    lastPosition.copy(app.position);
-    // app and camera are both THREE.Object3D type
-    // write a function the makes app face camera
-    // const appToCamera = new THREE.Vector3().subVectors(
-    //   camera.position,
-    //   app.position
-    // );
-    // if (!lastAppToCamera.equals(appToCamera)) {
-    //   const appToCameraAngle = Math.atan2(appToCamera.x, appToCamera.z);
-    //   app.rotation.y = appToCameraAngle;
-    //   lastAppToCamera.copy(appToCamera);
-    // }
-    // name change
-    // TODO: This should be an event listener
-    app.player.name = "Test";
-    if (name !== app.player.name) {
-      name = app.player.name;
-      // textMesh.text = name;
-      // textMesh.sync();
+    if (!lastPlateToCamera.equals(plateToCamera)) {
+      plateToCameraAngle = Math.atan2(plateToCamera.x, plateToCamera.z);
+      lastPlateToCamera.copy(plateToCamera);
     }
+    nameplateMatrix.copy(
+      new Matrix4()
+        .multiplyMatrices(
+          new Matrix4().makeScale(4, 4, 4),
+          new Matrix4().makeRotationY(plateToCameraAngle)
+        )
+        .setPosition(
+          app.player.position.x,
+          app.player.position.y + height,
+          app.player.position.z
+        )
+    );
+    nameplateMesh.setMatrixAt(instIndex, nameplateMatrix);
+    nameplateMesh.instanceMatrix.needsUpdate = true;
+    textMesh.geometry.applyMatrix4(nameplateMatrix);
   });
 
   return app;
