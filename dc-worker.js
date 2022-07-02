@@ -104,10 +104,10 @@ const instances = new Map();
 let loaded = false;
 let running = false;
 let queue = [];
-const _handleMethod = ({ method, args }) => {
+const _handleMethod = async ({method, args}) => {
   // console.log('worker handle method', method, args);
 
-  const _injectDamages = (chunks, instance) => {
+  /* const _injectDamages = (chunks, instance) => {
     // console.log("Instance : " + instance);
     // inject the damage to peer workers
     const method = 'injectDamages';
@@ -122,16 +122,15 @@ const _handleMethod = ({ method, args }) => {
         args,
       });
     }
-  };
-  const _chunksToResult = (chunks) =>
-    chunks.map(({ position }) => ({ position }));
+  }; */
+  const _chunksToResult = chunks => chunks.map(({ position }) => ({ position }));
 
   switch (method) {
     case 'initialize': {
-      const { chunkSize, seed } = args;
-      return dc.initialize(chunkSize, seed);
+      const {chunkSize, seed, numThreads} = args;
+      return dc.initialize(chunkSize, seed, numThreads);
     }
-    case 'port': {
+    /* case 'port': {
       const { port } = args;
       port.onmessage = (e) => {
         _handleMessage({
@@ -141,7 +140,7 @@ const _handleMethod = ({ method, args }) => {
       };
       ports.push(port);
       return;
-    }
+    } */
     case 'ensureInstance': {
       const { instance: instanceKey } = args;
       // console.log(instanceKey);
@@ -170,12 +169,13 @@ const _handleMethod = ({ method, args }) => {
       return true;
     }
     case 'generateTerrainChunk': {
+
       const {instance: instanceKey, chunkPosition, lodArray} = args;
       const instance = instances.get(instanceKey);
       if (!instance) throw new Error('generateTerrainChunk : instance not found');
       localVector.fromArray(chunkPosition)
         .multiplyScalar(chunkWorldSize);
-      const meshData = dc.createChunkMeshDualContouring(instance, localVector.x, localVector.y, localVector.z, lodArray);
+      const meshData = await dc.createTerrainChunkMeshAsync(instance, localVector.x, localVector.y, localVector.z, lodArray);
       const meshData2 = _cloneTerrainMeshData(meshData);
       meshData && dc.free(meshData.bufferAddress);
 
@@ -193,26 +193,29 @@ const _handleMethod = ({ method, args }) => {
       const {instance: instanceKey, chunkPosition, lodArray} = args;
       const instance = instances.get(instanceKey);
       if (!instance) throw new Error('generateTerrainChunkRenderable : instance not found');
-      localVector.fromArray(chunkPosition)
+      const position = new THREE.Vector3().fromArray(chunkPosition)
         .multiplyScalar(chunkWorldSize);
-      const meshData = dc.createTerrainChunkMesh(instance, localVector.x, localVector.y, localVector.z, lodArray);
+      // console.log('got position', position.toArray().join(','));
+      const meshData = await dc.createTerrainChunkMeshAsync(instance, position.x, position.y, position.z, lodArray);
+      // console.log('got mesh data result 1', meshData);
       const meshData2 = _cloneTerrainMeshData(meshData);
+      // console.log('got mesh data result 2', meshData2);
       meshData && dc.free(meshData.bufferAddress);
 
       if (meshData2) {
         const lod = lodArray[0];
-        meshData2.skylights = dc.getChunkSkylight(
+        meshData2.skylights = await dc.getChunkSkylightAsync(
           instance,
-          localVector.x,
-          localVector.y,
-          localVector.z,
+          position.x,
+          position.y,
+          position.z,
           lod
         );
-        meshData2.aos = dc.getChunkAo(
+        meshData2.aos = await dc.getChunkAoAsync(
           instance,
-          localVector.x,
-          localVector.y,
-          localVector.z,
+          position.x,
+          position.y,
+          position.z,
           lod
         );
 
@@ -235,7 +238,7 @@ const _handleMethod = ({ method, args }) => {
       if (!instance) throw new Error('generateLiquidChunk : instance not found');
       localVector.fromArray(chunkPosition)
         .multiplyScalar(chunkWorldSize);
-      const meshData = dc.createLiquidChunkMesh(instance, localVector.x, localVector.y, localVector.z, lodArray);
+      const meshData = await dc.createLiquidChunkMeshAsync(instance, localVector.x, localVector.y, localVector.z, lodArray);
       const meshData2 = _cloneLiquidMeshData(meshData);
       meshData && dc.free(meshData.bufferAddress);
 
@@ -253,7 +256,7 @@ const _handleMethod = ({ method, args }) => {
       const {instance: instanceKey, x, z, lod} = args;
       const instance = instances.get(instanceKey);
       if (!instance) throw new Error('getChunkHeightfield : instance not found');
-      const heightfield = dc.getChunkHeightfield(instance, x, z, lod);
+      const heightfield = await dc.getChunkHeightfieldAsync(instance, x, z, lod);
       const spec = {
         result: heightfield,
         transfers: [heightfield.buffer],
@@ -315,7 +318,7 @@ const _handleMethod = ({ method, args }) => {
         ps,
         qs,
         instances: instancesResult,
-      } = dc.createGrassSplat(instance, x, z, lod);
+      } = await dc.createGrassSplatAsync(instance, x, z, lod);
 
       const spec = {
         result: {
@@ -336,7 +339,7 @@ const _handleMethod = ({ method, args }) => {
         ps,
         qs,
         instances: instancesResult,
-      } = dc.createVegetationSplat(instance, x, z, lod);
+      } = await dc.createVegetationSplatAsync(instance, x, z, lod);
 
       const spec = {
         result: {
@@ -356,7 +359,7 @@ const _handleMethod = ({ method, args }) => {
         ps,
         qs,
         instances: instancesResult,
-      } = dc.createMobSplat(instance, x, z, lod);
+      } = await dc.createMobSplatAsync(instance, x, z, lod);
 
       const spec = {
         result: {
@@ -470,7 +473,7 @@ const _handleMethod = ({ method, args }) => {
         return null;
       }
     }
-    case 'injectDamages': {
+    /* case 'injectDamages': {
       const { instance: instanceKey, chunks } = args;
       // console.log(instanceKey);
       const instance = instances.get(instanceKey);
@@ -488,75 +491,63 @@ const _handleMethod = ({ method, args }) => {
         // console.log('worker inject damage 2', {position, damageBuffer});
       }
       return null;
-    }
+    } */
     default: {
       throw new Error(`unknown method: ${method}`);
     }
   }
 };
-const _handleMessage = async (e) => {
-  if (loaded && !running) {
-    const { data, port } = e;
+const _handleMessage = async m => {
+  const { data, port } = m;
+  const { requestId } = data;
+  const p = makePromise();
+  // try {
+    const spec = await _handleMethod(data);
+    p.accept(spec);
+  // } catch (err) {
+  //   p.reject(err);
+  // }
 
-    {
-      running = true;
-
-      const { requestId } = data;
-      const p = makePromise();
-      try {
-        const spec = await _handleMethod(data);
-        p.accept(spec);
-      } catch (err) {
-        p.reject(err);
-      }
-
-      if (requestId) {
-        p.then(
-          (spec) => {
-            const { result = null, transfers = [] } = spec ?? {};
-            port.postMessage(
-              {
-                method: 'response',
-                requestId,
-                result,
-              },
-              transfers
-            );
+  if (requestId) {
+    p.then(
+      (spec) => {
+        const { result = null, transfers = [] } = spec ?? {};
+        port.postMessage(
+          {
+            method: 'response',
+            requestId,
+            result,
           },
-          (err) => {
-            port.postMessage({
-              requestId,
-              error: err.message,
-            });
-          }
+          transfers
         );
+      },
+      (err) => {
+        port.postMessage({
+          requestId,
+          error: err.message,
+        });
       }
-
-      running = false;
-    }
-    // next
-    if (queue.length > 0) {
-      _handleMessage(queue.shift());
-    }
-  } else {
-    queue.push(e);
+    );
   }
 };
 self.onmessage = (e) => {
-  _handleMessage({
+  const m = {
     data: e.data,
     port: self,
-  });
+  };
+  if (loaded) {
+    _handleMessage(m);
+  } else {
+    queue.push(m);
+  }
 };
 
 (async () => {
-  // console.log('worker waitForLoad 1');
   await dc.waitForLoad();
-  // console.log('worker waitForLoad 2');
 
   loaded = true;
-  // console.log('worker initial messages', queue.slice());
-  if (queue.length > 0) {
-    _handleMessage(queue.shift());
+  for (let i = 0; i < queue.length; i++) {
+    _handleMessage(queue[i]);
   }
+  queue.length = 0;
 })();

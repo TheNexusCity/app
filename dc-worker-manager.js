@@ -2,7 +2,7 @@
 import {chunkMinForPosition, getLockChunkId, makeId} from './util.js';
 import {LockManager} from './lock-manager.js';
 
-const defaultNumDcWorkers = 4;
+const defaultNumDcWorkers = 1;
 
 export class DcWorkerManager {
   constructor({
@@ -68,7 +68,7 @@ export class DcWorkerManager {
           workers[i] = worker;
         }
 
-        // connect ports
+        /* // connect ports
         const _makePorts = () => {
           const result = Array(this.numWorkers);
           for (let i = 0; i < this.numWorkers; i++) {
@@ -105,7 +105,7 @@ export class DcWorkerManager {
               );
             }
           }
-        }
+        } */
 
         // initialize
         // note: deliberately don't wait for this; let it start in the background
@@ -145,8 +145,8 @@ export class DcWorkerManager {
     );
   }
   async generateTerrainChunk(chunkPosition, lodArray) {
-    const chunkId = getLockChunkId(chunkPosition);
-    return await this.locks.request(chunkId, async lock => {
+    // const chunkId = getLockChunkId(chunkPosition);
+    // return await this.locks.request(chunkId, async lock => {
       const worker = this.getNextWorker();
       const result = await worker.request('generateTerrainChunk', {
         instance: this.instance,
@@ -155,13 +155,13 @@ export class DcWorkerManager {
       });
       result.throwIfAborted();
       return result;
-    });
+    // });
   }
   async generateTerrainChunkRenderable(chunkPosition, lodArray, {
     signal
   }) {
-    const chunkId = getLockChunkId(chunkPosition);
-    return await this.locks.request(chunkId, {signal}, async lock => {
+    // const chunkId = getLockChunkId(chunkPosition);
+    // return await this.locks.request(chunkId, {signal}, async lock => {
       const worker = this.getNextWorker();
       const result = await worker.request('generateTerrainChunkRenderable', {
         instance: this.instance,
@@ -170,7 +170,7 @@ export class DcWorkerManager {
       });
       signal.throwIfAborted();
       return result;
-    });
+    // });
   }
   async generateLiquidChunk(chunkPosition, lodArray, {
     signal
@@ -284,14 +284,14 @@ export class DcWorkerManager {
     return result;
   }
   async drawSphereDamage(position, radius) {
-    const chunkPosition = chunkMinForPosition(
-      position.x,
-      position.y,
-      position.z,
-      this.chunkSize
-    );
-    const chunkId = getLockChunkId(chunkPosition);
-    return await this.locks.request(chunkId, async lock => {
+    // const chunkPosition = chunkMinForPosition(
+    //   position.x,
+    //   position.y,
+    //   position.z,
+    //   this.chunkSize
+    // );
+    // const chunkId = getLockChunkId(chunkPosition);
+    // return await this.locks.request(chunkId, async lock => {
       const worker = this.getNextWorker();
       const result = await worker.request('drawSphereDamage', {
         instance: this.instance,
@@ -299,7 +299,7 @@ export class DcWorkerManager {
         radius,
       });
       return result;
-    });
+    // });
   }
   async eraseSphereDamage(position, radius) {
     const chunkPosition = chunkMinForPosition(
