@@ -419,7 +419,6 @@ export default () => {
                       app.remove(flashMesh);
                       particleAlreadyInScene=false;
                       materialStartTime = 0;
-                      player = null;
                     }
                     
                   }

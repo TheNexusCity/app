@@ -1,5 +1,6 @@
 // import * as THREE from 'three';
-import { chunkMinForPosition, getLockChunkId, makeId } from './util.js';
+import {chunkMinForPosition, getLockChunkId, makeId} from './util.js';
+import {LockManager} from './lock-manager.js';
 
 const defaultNumDcWorkers = 4;
 
@@ -17,6 +18,7 @@ export class DcWorkerManager {
 
     this.workers = [];
     this.nextWorker = 0;
+    this.locks = new LockManager();
     this.loadPromise = null;
 
     // trigger load
@@ -132,10 +134,10 @@ export class DcWorkerManager {
     this.nextWorker = (this.nextWorker + 1) % workers.length;
     return worker;
   }
-  async setRange(range) {
+  async setClipRange(range) {
     await Promise.all(
       this.workers.map((worker) => {
-        return worker.request('setRange', {
+        return worker.request('setClipRange', {
           instance: this.instance,
           range: [range.min.toArray(), range.max.toArray()],
         });
@@ -144,7 +146,7 @@ export class DcWorkerManager {
   }
   async generateTerrainChunk(chunkPosition, lodArray) {
     const chunkId = getLockChunkId(chunkPosition);
-    return await navigator.locks.request(chunkId, async lock => {
+    return await this.locks.request(chunkId, async lock => {
       const worker = this.getNextWorker();
       const result = await worker.request('generateTerrainChunk', {
         instance: this.instance,
@@ -159,7 +161,7 @@ export class DcWorkerManager {
     signal
   }) {
     const chunkId = getLockChunkId(chunkPosition);
-    return await navigator.locks.request(chunkId, {signal}, async lock => {
+    return await this.locks.request(chunkId, {signal}, async lock => {
       const worker = this.getNextWorker();
       const result = await worker.request('generateTerrainChunkRenderable', {
         instance: this.instance,
@@ -182,7 +184,16 @@ export class DcWorkerManager {
     signal.throwIfAborted();
     return result;
   }
-  async getHeightfieldRange(x, z, w, h, lod) {
+  async getChunkHeightfield(x, z, lod) {
+    const worker = this.getNextWorker();
+    const result = await worker.request('getChunkHeightfield', {
+      instance: this.instance,
+      x, z,
+      lod,
+    });
+    return result;
+  }
+  /* async getHeightfieldRange(x, z, w, h, lod) {
     const worker = this.getNextWorker();
     const result = await worker.request('getHeightfieldRange', {
       instance: this.instance,
@@ -221,7 +232,7 @@ export class DcWorkerManager {
       lod,
     });
     return result;
-  }
+  } */
   async createGrassSplat(x, z, lod) {
     const worker = this.getNextWorker();
     const result = await worker.request('createGrassSplat', {
@@ -280,7 +291,7 @@ export class DcWorkerManager {
       this.chunkSize
     );
     const chunkId = getLockChunkId(chunkPosition);
-    return await navigator.locks.request(chunkId, async lock => {
+    return await this.locks.request(chunkId, async lock => {
       const worker = this.getNextWorker();
       const result = await worker.request('drawSphereDamage', {
         instance: this.instance,
@@ -298,7 +309,7 @@ export class DcWorkerManager {
       this.chunkSize
     );
     const chunkId = getLockChunkId(chunkPosition);
-    return await navigator.locks.request(chunkId, async lock => {
+    return await this.locks.request(chunkId, async lock => {
       const worker = this.getNextWorker();
       const result = await worker.request('eraseSphereDamage', {
         instance: this.instance,

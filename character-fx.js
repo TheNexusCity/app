@@ -4,7 +4,6 @@ this file implements avatar transformation effects/shaders.
 
 import * as THREE from 'three';
 import metaversefile from 'metaversefile';
-import * as metaverseModules from './metaverse-modules.js';
 import {sceneLowPriority} from './renderer.js';
 
 const localVector = new THREE.Vector3();
@@ -85,7 +84,6 @@ const _makeKiHairMaterial = () => {
 class CharacterFx {
   constructor(player) {
     this.player = player;
-    this.isLocalPlayer = player.isLocalPlayer;
 
     // this.lastJumpState = false;
     // this.lastStepped = [false, false];

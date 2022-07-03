@@ -6,14 +6,12 @@ each "app owner" (world, local player, remote players) has an app manager
 import * as THREE from "three";
 import * as Z from "zjs";
 
-import { makePromise, getRandomString } from "./util.js";
-import physicsManager from "./physics-manager.js";
-import { getLocalPlayer } from './players.js';
-import metaversefile from "metaversefile";
-import * as metaverseModules from "./metaverse-modules.js";
-import { jsonParse } from "./util.js";
-import logger from "./logger.js";
-import { applyPlayerToAvatar } from './player-avatar-binding.js';
+import {makePromise, getRandomString} from './util.js';
+import physicsManager from './physics-manager.js';
+import {getLocalPlayer} from './players.js';
+import metaversefile from 'metaversefile';
+import * as metaverseModules from './metaverse-modules.js';
+import {jsonParse} from './util.js';
 
 const localVector = new THREE.Vector3();
 const localVector2 = new THREE.Vector3();
@@ -29,6 +27,8 @@ class AppManager extends EventTarget {
     this.appsArray = null;
     this.apps = [];
     this.isLocalPlayer = isLocalPlayer;
+
+    this.transform = new Float32Array(10);
 
     this.pendingAddPromises = new Map();
     this.unbindStateFn = null;
@@ -72,8 +72,8 @@ class AppManager extends EventTarget {
   }
   // Remove all the apps from remote players before calling unbindState
   unbindState() {
-    if (!this.unbindStateFn) return logger.warn("unbindState called but not bound");
-    this.unbindStateFn();
+    // if (!this.unbindStateFn) return console.warn("unbindState called but not bound");
+    if (this.unbindStateFn) this.unbindStateFn();
     this.appsArray = null;
     this.unbindStateFn = null;
   }
@@ -138,7 +138,6 @@ class AppManager extends EventTarget {
   }
   // Called on the remote player on construction
   async loadApps() {
-    if(this.isLocalPlayer) return logger.warn("Trying to call loadApps on local player");
     for (let i = 0; i < this.appsArray.length; i++) {
       const trackedApp = this.appsArray.get(i, Z.Map);
       const app = await this.importTrackedApp(trackedApp);
@@ -148,11 +147,8 @@ class AppManager extends EventTarget {
   // Bind the tracked app to start listening for events
   // Especially transform updates
   bindTrackedApp(trackedApp, app) {
-    if(this.isLocalPlayer) return logger.warn("Cannot bind tracked app, local player is app owner");
+    if(this.isLocalPlayer) return console.warn("Cannot bind tracked app, local player is app owner");
     if(this.trackedAppBound(trackedApp.instanceId)) this.unbindTrackedApp(trackedApp.instanceId);
-    const player = metaversefile.getPlayerByInstanceId(app.instanceId);
-    const lastPosition = new THREE.Vector3();
-    const sitPosition = new THREE.Vector3();
     const observeTrackedAppFn = (e) => {
       if (e.changes.keys.has("transform")) {
         const transform = trackedApp.get("transform");
@@ -160,76 +156,19 @@ class AppManager extends EventTarget {
           app.quaternion.fromArray(transform, 3);
           app.scale.fromArray(transform, 7);
           app.updateMatrixWorld();
-          if(player){
-            // TODO: We want to update the player position from the app so that it stays in sync
-            // Right now, when we are sitting on a vehicle we get stutter since they are updating at different times
-            // The player also has interpolation, so the best-case scenario is that it smoothly lags behind the vehicle on remote clients
-          // if (app.getComponent("sit")) {
-          //   const timeDiff = transform[10];
-          //   const sitComponent = app.getComponent("sit");
-          //   console.log("handling sit", sitComponent);
-
-          //   const sitOffset = sitComponent.sitOffset;
-          //   sitPosition.fromArray(sitOffset);
-          //   sitPosition.applyQuaternion(app.quaternion);
-
-          //   player.position.copy(app.position).add(sitPosition);
-
-          //   player.quaternion.copy(app.quaternion);
-
-          //   player.positionInterpolant?.snapshot(timeDiff);
-          //   player.quaternionInterpolant?.snapshot(timeDiff);
-
-          //   for (const actionBinaryInterpolant of player
-          //     .actionBinaryInterpolantsArray) {
-          //     actionBinaryInterpolant.snapshot(timeDiff);
-          //   }
-          //   for (const actionInterpolant of player.actionInterpolantsArray) {
-          //     actionInterpolant.update(timeDiff);
-          //   }
-  
-          //   player.characterPhysics.setPosition(player.position);
-    
-          //     player.avatar.setVelocity(
-          //       timeDiff / 1000,
-          //       lastPosition,
-          //       player.position,
-          //       player.quaternion
-          //     );
-
-          //     lastPosition.copy(player.position);
-
-          //     applyPlayerToAvatar(player, null, player.avatar, []);
-          //       const timestamp = performance.now();
-          //     const timeDiffS = timeDiff / 1000;
-          //     player.characterSfx.update(timestamp, timeDiffS, player.getActionsState());
-          //     player.characterFx.update(timestamp, timeDiffS);
-          //     player.characterHitter.update(timestamp, timeDiffS);
-          //     player.characterBehavior.update(timestamp, timeDiffS);
-          
-          //     player.avatar.update(timestamp, timeDiff, false);
-            // 
-            // 
-          //}
-        }
-      } else {
-        logger.warn("tracked app key change", e)
       }
     };
     trackedApp.observe(observeTrackedAppFn);
 
     const instanceId = trackedApp.get("instanceId");
-    this.trackedAppUnobserveMap.set(
-      instanceId,
-      trackedApp.unobserve.bind(trackedApp, observeTrackedAppFn)
-    );
+    this.trackedAppUnobserveMap.set(instanceId, trackedApp.unobserve.bind(trackedApp, observeTrackedAppFn));
   }
   trackedAppBound (instanceId) {
     return !!this.trackedAppUnobserveMap.get(instanceId)
   }
   unbindTrackedApp(instanceId) {
     const fn = this.trackedAppUnobserveMap.get(instanceId);
-    if (!fn) return logger.warn("tracked app was not bound:", instanceId);
+    if (!fn) return console.warn("tracked app was not bound:", instanceId);
     this.trackedAppUnobserveMap.delete(instanceId);
     fn();
   }
@@ -327,7 +266,7 @@ class AppManager extends EventTarget {
         const mesh = await app.addModule(m);
         if (!live) return _bailout(app);
         if (!mesh) {
-          logger.warn("failed to load object", { contentId });
+          console.warn("failed to load object", { contentId });
         }
 
         this.addApp(app);
@@ -438,23 +377,10 @@ class AppManager extends EventTarget {
   ) {
     const self = this;
     this.appsArray.doc.transact(function tx() {
-      const transform = new Float32Array(11);
-
-      const pack3 = (v, i) => {
-        transform[i] = v.x;
-        transform[i + 1] = v.y;
-        transform[i + 2] = v.z;
-      };
-      const pack4 = (v, i) => {
-        transform[i] = v.x;
-        transform[i + 1] = v.y;
-        transform[i + 2] = v.z;
-        transform[i + 3] = v.w;
-      };
-
-      pack3(position, 0);
-      pack4(quaternion, 3);
-      pack3(scale, 7);
+      const transform = new Float32Array(10);
+      position.toArray(transform);
+      quaternion.toArray(transform, 3);
+      scale.toArray(transform, 7);
 
       self.addTrackedAppInternal(instanceId, contentId, transform, components);
     });
@@ -484,7 +410,7 @@ class AppManager extends EventTarget {
     if (removeIndex !== -1) {
       this.appsArray.delete(removeIndex, 1);
     } else {
-      logger.warn("invalid remove instance id", instanceId);
+      console.warn("invalid remove instance id", instanceId);
     }
   }
   removeTrackedApp(removeInstanceId) {
@@ -494,7 +420,7 @@ class AppManager extends EventTarget {
     });
   }
   addApp(app) {
-    if (this.apps.includes(app)) return logger.warn("Already has app", app)
+    if (this.apps.includes(app)) return console.warn("Already has app", app)
     this.apps.push(app);
 
     this.dispatchEvent(new MessageEvent("appadd", {data: app}));
@@ -538,7 +464,7 @@ class AppManager extends EventTarget {
   // Called when moving an app from one place to another
   // Especially in wear and unwear and when setting unwear on the character
   transplantApp(app, dstAppManager) {
-    if(this === dstAppManager) return logger.warn("Can't transplant app to itself");
+    if(this === dstAppManager) return console.warn("Can't transplant app to itself");
     const { instanceId } = app;
 
     this.unbindTrackedApp(instanceId);
@@ -550,23 +476,12 @@ class AppManager extends EventTarget {
     let transform = srcTrackedApp.get("transform");
     const components = srcTrackedApp.get("components");
 
-    if (!transform) transform = new Float32Array(11);
+    if (!transform) transform = new Float32Array(10);
 
-    const pack3 = (v, i) => {
-      transform[i] = v.x;
-      transform[i + 1] = v.y;
-      transform[i + 2] = v.z;
-    };
-    const pack4 = (v, i) => {
-      transform[i] = v.x;
-      transform[i + 1] = v.y;
-      transform[i + 2] = v.z;
-      transform[i + 3] = v.w;
-    };
+    app.position.toArray(transform);
+    app.quaternion.toArray(transform, 3);
+    app.scale.toArray(transform, 7);
 
-    pack3(app.position, 0);
-    pack4(app.quaternion, 3);
-    pack3(app.scale, 7);
     const self = this;
     this.appsArray.doc.transact(() => {
       self.removeTrackedAppInternal(instanceId);
@@ -589,41 +504,23 @@ class AppManager extends EventTarget {
     const instanceId = app.instanceId;
     const components = app.components.slice();
 
-    const transform = new Float32Array(11);
+    const transform = new Float32Array(10);
+    app.position.toArray(transform);
+    app.quaternion.toArray(transform, 3);
+    app.scale.toArray(transform, 7);
 
-    const pack3 = (v, i) => {
-      transform[i] = v.x;
-      transform[i + 1] = v.y;
-      transform[i + 2] = v.z;
-    };
-    const pack4 = (v, i) => {
-      transform[i] = v.x;
-      transform[i + 1] = v.y;
-      transform[i + 2] = v.z;
-      transform[i + 3] = v.w;
-    };
-
-    pack3(app.position, 0);
-    pack4(app.quaternion, 3);
-    pack3(app.scale, 7);
     const self = this;
     this.appsArray.doc.transact(() => {
-      dstTrackedApp = self.addTrackedAppInternal(
-        instanceId,
-        contentId,
-        transform,
-        components
-      );
+      dstTrackedApp = self.addTrackedAppInternal(instanceId, contentId, transform, components);
     });
   }
   hasApp(app) {
     return this.apps.includes(app);
   }
-  packed = new Float32Array(11);
 
   // called by local player, remote players and world update()
   update(timeDiff) {
-    if (!this.appsArray) return logger.warn("Can't push app updates because appsArray is null")
+    if (!this.appsArray) return console.warn("Can't push app updates because appsArray is null")
     const self = this;
       for (const app of self.apps) {
         const trackedApp = self.getTrackedApp(app.instanceId);
@@ -636,26 +533,13 @@ class AppManager extends EventTarget {
                 localQuaternion,
                 localVector2
               );
-              const packed = self.packed;
-              const pack3 = (v, i) => {
-                packed[i] = v.x;
-                packed[i + 1] = v.y;
-                packed[i + 2] = v.z;
-              };
-              const pack4 = (v, i) => {
-                packed[i] = v.x;
-                packed[i + 1] = v.y;
-                packed[i + 2] = v.z;
-                packed[i + 3] = v.w;
-              };
-              pack3(localVector, 0);
-              pack4(localQuaternion, 3);
-              pack3(localVector2, 7);
-              packed[10] = timeDiff;
-              trackedApp.set("transform", packed);
-              console.log("updating")
+              const transform = self.transform;
+              localVector.toArray(transform, 0);
+              localVector.toArray(transform, 3);
+              localVector.toArray(transform, 7);
+              trackedApp.set('transform', transform)
             } else {
-              logger.warn("App is not a tracked app, not sending out transform")
+              console.warn("App is not a tracked app, not sending out transform")
             }
           };
           const localPlayer = getLocalPlayer();

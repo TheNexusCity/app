@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import {mod} from './util.js';
-import {avatarInterpolationFrameRate, avatarInterpolationNumFrames} from './constants.js';
 
 export class ScalarInterpolant {
   constructor(fn, minValue, maxValue) {

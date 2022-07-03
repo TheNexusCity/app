@@ -106,7 +106,7 @@
                 0,
                 1
             ],
-            "start_url": "https://webaverse.github.io/skybox-anime/"
+            "start_url": "https://webaverse.github.io/skybox-360/"
         },
         {
             "position": [
@@ -134,6 +134,20 @@
                 0.5
             ],
             "start_url": "https://m3-org.github.io/tubby-pet/yellowcupid/"
+        },
+        {
+            "position": [
+                -13,
+                0.05,
+                4
+            ],
+            "quaternion": [
+                0,
+                -0.866,
+                0,
+                0.5
+            ],
+            "start_url": "https://thenexuscity.github.io/phoenix/"
         },
         {
             "position": [

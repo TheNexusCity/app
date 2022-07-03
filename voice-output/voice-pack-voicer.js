@@ -99,7 +99,6 @@ class VoicePackVoicer {
 
     const p = makePromise();
     const _recurse = async () => {
-      console.log("this.voices is", this.voices)
       const {offset, duration} = selectVoice(this.voices);
 
       const audioContext = Avatar.getAudioContext();

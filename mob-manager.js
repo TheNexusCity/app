@@ -994,7 +994,6 @@ gl_Position = projectionMatrix * mvPosition;
 
 class MobsCompiledData {
   constructor({
-    procGenInstance = null,
     appUrls = [],
   } = {}) {
     this.glbs = null;

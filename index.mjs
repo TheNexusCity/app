@@ -6,11 +6,9 @@ import fs from 'fs';
 import express from 'express';
 import vite from 'vite';
 import wsrtc from 'wsrtc/wsrtc-server.mjs';
-import dotenv from 'dotenv'
 
-// Variables in .env and .env.defaults will be added to process.env
-dotenv.config({ path: ".env" });
-
+const SERVER_ADDR = '0.0.0.0';
+const SERVER_NAME = 'local.webaverse.com';
 
 Error.stackTraceLimit = 300;
 const cwd = process.cwd();
@@ -113,10 +111,8 @@ function makeId(length) {
     }
   });
 
-  const SERVER_ADDR = process.env.SERVER_HOST || '0.0.0.0';
-  const SERVER_NAME = process.env.SERVER_NAME || 'local.webaverse.com';
   const isHttps = !process.env.HTTP_ONLY && (!!certs.key && !!certs.cert);
-  const port = parseInt(process.env.SERVER_PORT, 10) || (isProduction ? 443 : 3000);
+  const port = parseInt(process.env.PORT, 10) || (isProduction ? 443 : 3000);
   const wsPort = port + 1;
 
   const _makeHttpServer = () => isHttps ? https.createServer(certs, app) : http.createServer(app);
@@ -134,9 +130,9 @@ function makeId(length) {
   });
   app.use(viteServer.middlewares);
   
-  await new Promise((resolve, reject) => {
+  await new Promise((accept, reject) => {
     httpServer.listen(port, SERVER_ADDR, () => {
-      resolve();
+      accept();
     });
     httpServer.on('error', reject);
   });
@@ -150,14 +146,13 @@ function makeId(length) {
     }
   })();
   const initialRoomState = (() => {
-    const s = fs.readFileSync('./scenes/makersdistrict.scn', 'utf8');
+    const s = fs.readFileSync('./scenes/gunroom.scn', 'utf8');
     const j = JSON.parse(s);
     const {objects} = j;
     
     const appsMapName = 'apps';
-
     const result = {
-        [appsMapName]: [],
+      [appsMapName]: [],
     };
     for (const object of objects) {
       let {start_url, type, content, position = [0, 0, 0], quaternion = [0, 0, 0, 1], scale = [1, 1, 1]} = object;
@@ -177,14 +172,16 @@ function makeId(length) {
     }
     return result;
   })();
-  const initialRoomNames = [];
+  const initialRoomNames = [
+    'Erithor',
+  ];
   wsrtc.bindServer(wsServer, {
     initialRoomState,
     initialRoomNames,
   });
-  await new Promise((resolve, reject) => {
+  await new Promise((accept, reject) => {
     wsServer.listen(wsPort, SERVER_ADDR, () => {
-      resolve();
+      accept();
     });
     wsServer.on('error', reject);
   });

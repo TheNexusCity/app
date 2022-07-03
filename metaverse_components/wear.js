@@ -35,7 +35,7 @@ export default (app, component) => {
     if (e.player) {
       player = e.player;
     } else {
-      console.error('no player!');
+      throw new Error('Trying to call wearupdate, but no player', e);
     }
     if (e.wear) {
       wearSpec = app.getComponent('wear');
@@ -54,11 +54,7 @@ export default (app, component) => {
           if (wearSpec.skinnedMesh) {
             let skinnedMesh = null;
             app.glb.scene.traverse(o => {
-              if (
-                skinnedMesh === null &&
-                o.isSkinnedMesh &&
-                o.name === wearSpec.skinnedMesh
-              ) {
+              if (skinnedMesh === null && o.isSkinnedMesh && o.name === wearSpec.skinnedMesh) {
                 skinnedMesh = o;
               }
             });
@@ -132,9 +128,7 @@ export default (app, component) => {
                 const humanBones = [];
                 for (const k in boneNodeMapping) {
                   const boneName = boneNodeMapping[k];
-                  const boneNodeIndex = nodes.findIndex(
-                    node => node.name === boneName,
-                  );
+                  const boneNodeIndex = nodes.findIndex(node => node.name === boneName);
                   if (boneNodeIndex !== -1) {
                     const boneSpec = {
                       bone: k,
@@ -143,13 +137,7 @@ export default (app, component) => {
                     };
                     humanBones.push(boneSpec);
                   } else {
-                    console.log(
-                      'failed to find bone',
-                      boneNodeMapping,
-                      k,
-                      nodes,
-                      boneNodeIndex,
-                    );
+                    console.log('failed to find bone', boneNodeMapping, k, nodes, boneNodeIndex);
                   }
                 }
                 if (!app.glb.parser.json.extensions) {
@@ -202,25 +190,6 @@ export default (app, component) => {
       modelBones = null;
     }
   };
-
-  const resettransform = e => {
-    if (e.player) {
-      player = e.player;
-      const avatarHeight = e.player.avatar ? e.player.avatar.height : 0;
-      e.app.position
-        .copy(e.player.position)
-        .add(
-          localVector
-            .set(0, -avatarHeight + 0.5, -1.0)
-            .applyQuaternion(e.player.quaternion),
-        );
-      e.app.quaternion.identity();
-      e.app.scale.set(1, 1, 1);
-      e.app.updateMatrixWorld();
-    }
-  };
-
-  app.addEventListener('resettransform', resettransform);
 
   const _copyBoneAttachment = spec => {
     const {boneAttachment = 'hips', position, quaternion, scale} = spec;
@@ -298,9 +267,7 @@ export default (app, component) => {
           ? animations.find(a => a.name === appAimAction.appAnimation)
           : null;
         if (appAnimation && !appAimAnimationMixers) {
-          const clip = animations.find(
-            a => a.name === appAimAction.appAnimation,
-          );
+          const clip = animations.find(a => a.name === appAimAction.appAnimation);
           if (clip) {
             appAimAnimationMixers = [];
             app.glb.scene.traverse(o => {
@@ -373,7 +340,6 @@ export default (app, component) => {
     remove() {
       // console.log('wear component remove');
       app.removeEventListener('wearupdate', wearupdate);
-      app.removeEventListener('resettransform', resettransform);
       metaversefile.clearFrame(frame);
 
       _unwear();
