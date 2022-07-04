@@ -9,8 +9,6 @@ import { world } from "./world.js";
 import hpManager from "./hp-manager.js";
 import metaversefile from 'metaversefile';
 
-const {useLocalPlayer} = metaversefile;
-
 const appSymbol = "app"; // Symbol('app');
 const avatarSymbol = "avatar"; // Symbol('avatar');
 const maxMirrorDistanace = 3;
@@ -69,9 +67,8 @@ export function makeAvatar(app) {
       app.dispatchEvent({ type: "hittrackeradded" });
 
       const die = () => {
-        hpManager.resetHp(hitTracker);
-        console.log("player died");
-        //TODO: death animation, reset position?
+        // hpManager.resetHp(hitTracker);
+        console.log('player died')
       };
       hitTracker.addEventListener("die", die);
 

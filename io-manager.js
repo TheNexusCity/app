@@ -282,8 +282,10 @@ ioManager.bindInterface = () => {
   }
 }; */
 const doubleTapTime = 200;
+let tempFlag = false
 ioManager.keydown = e => {
-  if (_inputFocused() || e.repeat) {
+  const localPlayer = metaversefile.useLocalPlayer()
+  if (_inputFocused() || e.repeat || (!localPlayer.live && [87,65,83,68].indexOf(e.which) > -1)) {
     return;
   }
 
@@ -588,8 +590,11 @@ ioManager.keydown = e => {
       break;
     }
     case 72: { // H
-      const debug = metaversefile.useDebug();
-      debug.toggle();
+      // const debug = metaversefile.useDebug();
+      // debug.toggle();
+      const localPlayer = metaversefile.useLocalPlayer();
+      localPlayer.setLive(tempFlag)
+      tempFlag = !tempFlag
       break;
     }
     case 192: { // tilde

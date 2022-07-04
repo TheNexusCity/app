@@ -51,7 +51,9 @@ import {murmurhash3} from './procgen/murmurhash3.js';
 import musicManager from './music-manager.js';
 import {makeId, clone, unFrustumCull, enableShadows} from './util.js';
 import overrides from './overrides.js';
+import metaversefileApi from 'metaversefile';
 // import * as voices from './voices.js';
+import dropManager from "./drop-manager"
 
 const localVector = new THREE.Vector3();
 const localVector2 = new THREE.Vector3();
@@ -192,6 +194,7 @@ class PlayerBase extends THREE.Object3D {
     this.eyeballTargetEnabled = false;
     this.voicePack = null;
     this.voiceEndpoint = null;
+    this.live = true
   }
   findAction(fn) {
     const actions = this.getActionsState();
@@ -982,7 +985,26 @@ class StatePlayer extends PlayerBase {
       }
     });
   }
-  destroy() {
+  setLive(flag) {
+    this.live = flag
+    const initialScale = this.avatar.initialScale
+    if (flag) {
+      this.avatar.model.scale.set(initialScale.x, initialScale.y, initialScale.z)
+    } else {
+      this.avatar.model.scale.set(0.01, initialScale.y, 0.01)
+      this.unwearAll()
+      dropManager.claims = []
+      dropManager.dispatchEvent(new MessageEvent('claimschange', {
+        data: {
+          claims: [],
+        },
+      }))
+    }
+    this.avatar.model.visible = flag
+    this.characterFx.nameplate.visible = flag
+    this.pushPlayerUpdates()
+  }
+  unwearAll() {
     if (this.isLocalPlayer) {
       const wearActions = Array.from(this.getActionsState()).filter(
         (action) => action.type === "wear"
@@ -999,7 +1021,9 @@ class StatePlayer extends PlayerBase {
         }
       }
     }
-
+  }
+  destroy() {
+    this.unwearAll()
     this.unbindState();
     if (this.isLocalPlayer) {
       this.appManager.unbindStateLocal();
