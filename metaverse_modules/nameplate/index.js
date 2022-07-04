@@ -100,12 +100,12 @@ export default () => {
     nameplateMatrix.copy(
       new Matrix4()
         .multiplyMatrices(
-          new Matrix4().makeScale(4, 4, 4),
+          new Matrix4().makeScale(30, 30, 30),
           new Matrix4().makeRotationY(plateToCameraAngle)
         )
         .setPosition(
           app.player.position.x,
-          app.player.position.y + 0.3,
+          app.player.position.y + 0.4,
           app.player.position.z
         )
     );
@@ -113,7 +113,7 @@ export default () => {
     nameplateMesh.instanceMatrix.needsUpdate = true;
     textGroup.position.set(
       app.player.position.x,
-      app.player.position.y + 0.55,
+      app.player.position.y + 0.52,
       app.player.position.z
     );
     textGroup.rotation.y = plateToCameraAngle;

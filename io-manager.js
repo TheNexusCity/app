@@ -25,6 +25,7 @@ import transformControls from './transform-controls.js';
 import storyManager from './story.js';
 // import domRenderer from './dom-renderer.jsx';
 import raycastManager from './raycast-manager.js';
+import {AppContext} from "./src/components/app"
 
 const localVector = new THREE.Vector3();
 // const localVector2 = new THREE.Vector3();
@@ -282,7 +283,6 @@ ioManager.bindInterface = () => {
   }
 }; */
 const doubleTapTime = 200;
-let tempFlag = false
 ioManager.keydown = e => {
   const localPlayer = metaversefile.useLocalPlayer()
   if (_inputFocused() || e.repeat || (!localPlayer.live && [87,65,83,68].indexOf(e.which) > -1)) {
@@ -593,8 +593,8 @@ ioManager.keydown = e => {
       // const debug = metaversefile.useDebug();
       // debug.toggle();
       const localPlayer = metaversefile.useLocalPlayer();
-      localPlayer.setLive(tempFlag)
-      tempFlag = !tempFlag
+      localPlayer.setLive(false)
+      ioManager.dispatchEvent(new MessageEvent('setLive', {data: {isLive: false}}));
       break;
     }
     case 192: { // tilde
