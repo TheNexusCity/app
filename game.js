@@ -633,6 +633,9 @@ const _gameUpdate = (timestamp, timeDiff) => {
   const renderer = getRenderer();
   const localPlayer = getLocalPlayer();
 
+  grabUseMesh.visible = false;
+  if (!localPlayer.live) return
+
   const _handlePush = () => {
     if (gameManager.canPush()) {
       if (ioManager.keys.forward) {
@@ -651,7 +654,6 @@ const _gameUpdate = (timestamp, timeDiff) => {
         (action) => action.type === "wear" && action.instanceId === o.instanceId
       );
 
-    grabUseMesh.visible = false;
     if (!gameManager.editMode) {
       const avatarHeight = localPlayer.avatar ? localPlayer.avatar.height : 0;
       localVector

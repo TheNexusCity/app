@@ -441,6 +441,7 @@ class Avatar {
     })();
 
     this.model = model;
+    this.initialScale = new THREE.Vector3().copy(model.scale)
     this.spriteMegaAvatarMesh = null;
     this.crunchedModel = null;
     this.options = options;
