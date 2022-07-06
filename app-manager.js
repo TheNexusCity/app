@@ -12,6 +12,7 @@ import {getLocalPlayer} from './players.js';
 import metaversefile from 'metaversefile';
 import * as metaverseModules from './metaverse-modules.js';
 import {jsonParse} from './util.js';
+import { loadingManager } from "./loading-manager.js";
 
 const localVector = new THREE.Vector3();
 const localVector2 = new THREE.Vector3();
@@ -184,6 +185,7 @@ class AppManager extends EventTarget {
   // Called when a new app is added to the app manager in observeAppsFn
   // Also called explicitly by loadApps on remote player at init
   async importTrackedApp(trackedApp) {
+    loadingManager.trackedAppAdded()
     const trackedAppBinding = trackedApp.toJSON();
     const {
       instanceId,
@@ -273,8 +275,10 @@ class AppManager extends EventTarget {
       }
 
       p.accept(app);
+      loadingManager.trackedAppLoaded()
       return app;
     } catch (err) {
+      loadingManager.trackedAppLoaded()
       p.reject(err);
     } finally {
       cleanup();

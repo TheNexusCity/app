@@ -48,6 +48,8 @@ import zTargeting from './z-targeting.js';
 import raycastManager from './raycast-manager.js';
 import {defaultPlayerSpec} from './constants';
 
+import {loadingManager} from './loading-manager';
+
 const localVector = new THREE.Vector3();
 const localVector2 = new THREE.Vector3();
 const localQuaternion = new THREE.Quaternion();
@@ -78,22 +80,27 @@ export default class Webaverse extends EventTarget {
 
     story.listenHack();
 
+    this.isModuleLoaded = false
+
+    const modulePromises = [
+      physx.waitForLoad(),
+      physxWorkerManager.waitForLoad(),
+      Avatar.waitForLoad(),
+      audioManager.waitForLoad(),
+      sounds.waitForLoad(),
+      zTargeting.waitForLoad(),
+      particleSystemManager.waitForLoad(),
+      transformControls.waitForLoad(),
+      metaverseModules.waitForLoad(),
+      voices.waitForLoad(),
+      musicManager.waitForLoad(),
+      WebaWallet.waitForLoad(),
+    ]
+
     this.loadPromise = (async () => {
-      await Promise.all([
-        physx.waitForLoad(),
-        physxWorkerManager.waitForLoad(),
-        Avatar.waitForLoad(),
-        audioManager.waitForLoad(),
-        sounds.waitForLoad(),
-        zTargeting.waitForLoad(),
-        particleSystemManager.waitForLoad(),
-        transformControls.waitForLoad(),
-        metaverseModules.waitForLoad(),
-        voices.waitForLoad(),
-        musicManager.waitForLoad(),
-        WebaWallet.waitForLoad(),
-      ]);
+      await Promise.all(modulePromises);
     })();
+    loadingManager.setModulePromises(modulePromises)
   }
 
   waitForLoad() {
@@ -177,6 +184,8 @@ export default class Webaverse extends EventTarget {
       await session.end();
     }
   }
+
+  // window.addEventListener('pushstate', pushstate);
 
   /* injectRigInput() {
     let leftGamepadPosition, leftGamepadQuaternion, leftGamepadPointer, leftGamepadGrip, leftGamepadEnabled;
@@ -292,19 +301,27 @@ export default class Webaverse extends EventTarget {
     this.bindInput();
     this.bindInterface();
     this.bindCanvas(canvas);
-
-    if (universe) await universe.handleUrlUpdate();
-    await this.waitForLoad();
-
+    
+    const renderer = getRenderer();
     let lastTimestamp = performance.now();
     const animate = (timestamp, frame) => {
+      if (!this.isModuleLoaded) {
+        this.dispatchEvent(new MessageEvent('preframe', {
+          data: {
+            canvas: renderer.domElement,
+            context: renderer.getContext(),
+            timestamp,
+          },
+        }));
+        return
+      }
       performanceTracker.startFrame();
 
       const _frame = () => {
         timestamp = timestamp ?? performance.now();
         const timeDiff = timestamp - lastTimestamp;
         lastTimestamp = timestamp;
-        const timeDiffCapped = Math.min(Math.max(timeDiff, 0), 500);
+        const timeDiffCapped = Math.min(Math.max(timeDiff, 0), 100);
 
         performanceTracker.setGpuPrefix('pre');
         const localPlayer = metaversefileApi.useLocalPlayer();
@@ -377,12 +394,24 @@ export default class Webaverse extends EventTarget {
       performanceTracker.endFrame();
     };
 
-    _startHacks(this);
+    renderer.setAnimationLoop(animate);
+
+    loadingManager.startLoading()
+
+    await universe.handleUrlUpdate();
 
     const localPlayer = metaversefileApi.useLocalPlayer();
-    await localPlayer.setPlayerSpec(defaultPlayerSpec);
-    const renderer = getRenderer();
-    renderer.setAnimationLoop(animate);
+    const playerSpecPromise = localPlayer.setPlayerSpec(defaultPlayerSpec);
+
+    await this.waitForLoad()
+    this.isModuleLoaded = true
+    // loadingManager.setModuleLoaded(true)
+
+    await playerSpecPromise
+
+    loadingManager.requestLoadEnd()
+    
+    _startHacks(this);
   }
 }
 
@@ -552,7 +581,6 @@ const _startHacks = webaverse => {
       mikuModel.updateMatrixWorld();
     }
   }; */
-  webaverse.titleCardHack = false;
   // let haloMeshApp = null;
   window.addEventListener('keydown', e => {
     if (e.which === 46) { // .
@@ -572,13 +600,6 @@ const _startHacks = webaverse => {
 
       // _ensureMikuModel();
       // _updateMikuModel();
-    } else if (e.which === 106) { // *
-      webaverse.titleCardHack = !webaverse.titleCardHack;
-      webaverse.dispatchEvent(new MessageEvent('titlecardhackchange', {
-        data: {
-          titleCardHack: webaverse.titleCardHack,
-        },
-      }));
     } else {
       const match = e.code.match(/^Numpad([0-9])$/);
       if (match) {
@@ -590,4 +611,4 @@ const _startHacks = webaverse => {
   });
 };
 
-export const webaverse = new Webaverse();
+// export const webaverse = new Webaverse();
