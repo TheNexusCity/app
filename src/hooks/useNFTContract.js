@@ -159,7 +159,7 @@ export default function useNFTContract(currentAccount) {
     }
   }
 
-  async function mintfromVoucher(app, previewImage="testimageurl", callback = () => {}) {
+  async function mintfromVoucher(app, previewImage="", callback = () => {}) {
     setMinting(true);
     setError('');
     try {
@@ -173,7 +173,7 @@ export default function useNFTContract(currentAccount) {
       const description = "testDescription";
 
       const metadataFileName = `${name}-metadata.json`;
-      let metadata;
+      let metadata; //app.level missed
       if (previewImage) { // 3D object
         imageURI = previewImage;
         avatarURI = "testcontentID";
@@ -185,8 +185,10 @@ export default function useNFTContract(currentAccount) {
             animation_url: avatarURI
         }
 
+        //app.level missed
+
       } else { // image object
-        imageURI = "testcontentID";
+        imageURI = app.start_url;
         avatarURI = '';
 
         metadata = {
@@ -233,7 +235,7 @@ export default function useNFTContract(currentAccount) {
             callback(Webaversemintres);
           } catch (err) {
             console.warn('minting to webaverse contract failed');
-            setError('Mint Failed');
+            setError('Claim Failed');
           }
         }
       } else { // mintfee = 0 for Polygon not webaverse sidechain
@@ -242,13 +244,13 @@ export default function useNFTContract(currentAccount) {
           callback(Webaversemintres);
         } catch (err) {
           console.warn('minting to webaverse contract failed');
-          setError('Mint Failed');
+          setError('Claim Failed');
         }
       }
       setMinting(false);
     } catch (err) {
       console.warn('minting to webaverse contract failed');
-      setError('Mint Failed');
+      setError('Claim Failed');
       setMinting(false);
     }
   }

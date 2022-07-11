@@ -15,6 +15,7 @@ import { ChainContext } from '../../../hooks/chainProvider';
 import dropManager from '../../../../drop-manager';
 import cardsManager from '../../../../cards-manager.js';
 import { isChainSupported } from '../../../hooks/useChain';
+import { GenericLoadingMessage, LoadingIndicator, registerLoad } from '../../../LoadingBox.jsx';
 
 //
 
@@ -267,10 +268,11 @@ export const Equipment = () => {
     const [ hoverObject, setHoverObject ] = useState(null);
     const [ selectObject, setSelectObject ] = useState(null);
     // const [ spritesheet, setSpritesheet ] = useState(null);
+    const [ ClaimComplete, setClaimComplete ] = useState(false);
     const [inventoryObject, setInventoryObject] = useState([]);
     const [ faceIndex, setFaceIndex ] = useState(1);
     const { selectedChain, supportedChain } = useContext(ChainContext)
-    const { getTokens, mintfromVoucher } = useNFTContract(account.currentAddress);
+    const { getTokens, mintfromVoucher, minting, error, setError } = useNFTContract(account.currentAddress);
     const [ claims, setClaims ] = useState([]);
     const [ cachedLoader, setCachedLoader ] = useState(() => new CachedLoader({
         async loadFn(url, value, {signal}) {            
@@ -364,9 +366,12 @@ export const Equipment = () => {
         sounds.playSoundName('menuNext');
     };
 
-    const mintClaim = (e) => {
-        console.log("mintClaim", e)
-        mintfromVoucher(e);
+    const mintClaim = async (app) => {
+        console.log("mintClaim", app)
+        
+        await mintfromVoucher(app, "" , () => {
+            setClaimComplete(true);
+        });
     }
     const selectClassName = styles[`select-${selectedMenuIndex}`];
 
@@ -380,6 +385,15 @@ export const Equipment = () => {
             dropManager.removeEventListener('claimschange', claimschange);
         };
     }, [claims]);
+
+    useEffect(() => {
+        if (mintComplete) {
+            alert(mintComplete)
+            setTimeout(() => {
+                setClaimComplete(false);
+            }, 3000);
+        }
+    }, [mintComplete]);
 
     useEffect(() => {
         if (cachedLoader) {
@@ -423,159 +437,165 @@ export const Equipment = () => {
     }, [faceIndex]);
 
     return (
-        <div className={styles.equipment}>
-            <div className={classnames(
-                styles.menus,
-                open ? styles.open : null,
-                selectClassName,
-            )}>
-                <div
-                    className={styles.scene}
-                    style={{
-                        transform: `translateX(300px) translateZ(-300px) rotateY(${-faceIndex * 90}deg) translateX(-300px)`,
+        <>
+            <GenericLoadingMessage open={minting} name={'Claiming'} detail={'Creating NFT...'}></GenericLoadingMessage>
+            <GenericLoadingMessage open={ClaimComplete} name={'Claiming Complete'} detail={'Press [Tab] to use your inventory.'}></GenericLoadingMessage>
+            <GenericLoadingMessage open={error} name={'Error'} detail={error}></GenericLoadingMessage>
+            <div className={styles.equipment}>
+                <div className={classnames(
+                    styles.menus,
+                    open ? styles.open : null,
+                    selectClassName,
+                )}>
+                    <div
+                        className={styles.scene}
+                        style={{
+                            transform: `translateX(300px) translateZ(-300px) rotateY(${-faceIndex * 90}deg) translateX(-300px)`,
+                        }}
+                    >
+                        <EquipmentItems
+                            leftText="Land"
+                            rightText="Season"
+                            sections={[
+                                {
+                                    name: 'Inventory',
+                                    tokens: claims,
+                                },
+                                {
+                                    name: 'Claimed',
+                                    tokens: inventoryObject,
+                            },
+                            ]}
+                            hoverObject={hoverObject}
+                            selectObject={selectObject}
+                            loading={loading}
+                            onMouseEnter={onMouseEnter}
+                            onMouseDown={onMouseDown}
+                            onDragStart={onDragStart}
+                            onDoubleClick={onDoubleClick}
+                            menuLeft={menuLeft}
+                            menuRight={menuRight}
+                            highlights={true}
+                            ItemClass={ObjectItem}
+                        />
+                        <EquipmentItems
+                            leftText="Inventory"
+                            rightText="Account"
+                            sections={[
+                                {
+                                    name: 'Season',
+                                    tokens: userTokenObjects,
+                                },
+                                {
+                                    name: 'From Upstreet',
+                                    tokens: objects.upstreet,
+                                },
+                            ]}
+                            hoverObject={hoverObject}
+                            selectObject={selectObject}
+                            loading={loading}
+                            onMouseEnter={onMouseEnter}
+                            onMouseDown={onMouseDown}
+                            onDragStart={onDragStart}
+                            onDoubleClick={onDoubleClick}
+                            menuLeft={menuLeft}
+                            menuRight={menuRight}
+                            highlights={false}
+                            ItemClass={ObjectItem}
+                        />
+                        <EquipmentItems
+                            leftText="Season"
+                            rightText="Land"
+                            sections={[
+                                {
+                                    name: 'Account',
+                                    tokens: [],
+                                },
+                            ]}
+                            hoverObject={hoverObject}
+                            selectObject={selectObject}
+                            loading={loading}
+                            onMouseEnter={onMouseEnter}
+                            onMouseDown={onMouseDown}
+                            onDragStart={onDragStart}
+                            onDoubleClick={onDoubleClick}
+                            menuLeft={menuLeft}
+                            menuRight={menuRight}
+                            highlights={false}
+                            ItemClass={ObjectItem}
+                        />
+                        <EquipmentItems
+                            leftText="Account"
+                            rightText="Inventory"
+                            sections={[
+                                {
+                                    name: 'Public',
+                                    tokens: landTokenObjects,
+                                },
+                            ]}
+                            hoverObject={hoverObject}
+                            selectObject={selectObject}
+                            loading={loading}
+                            onMouseEnter={onMouseEnter}
+                            onMouseDown={onMouseDown}
+                            onDragStart={onDragStart}
+                            onDoubleClick={onDoubleClick}
+                            menuLeft={menuLeft}
+                            menuRight={menuRight}
+                            highlights={false}
+                            ItemClass={LandItem}
+                        />
+                    </div>
+                </div>
+
+                <div className={classnames(
+                    styles.menuFooter,
+                    open ? styles.open : null,
+                    selectClassName,
+                )}>
+                    <div className={styles.menuFooterWrap}>
+                        {equipmentTabs.map((imgFileName, i) => {
+                            return (
+                                <div
+                                    className={classnames(
+                                        styles.menuFooterItem,
+                                        selectedMenuIndex === i ? styles.selected : null,
+                                    )}
+                                    onClick={e => {
+                                        const delta = i - selectedMenuIndex;
+                                        setFaceIndex(faceIndex + delta);
+
+                                        sounds.playSoundName('menuNext');
+                                    }}
+                                    key={i}
+                                >
+                                    <img className={styles.img} src={`./images/equipment/${imgFileName}`} />
+                                </div>
+                            );
+                        })}
+                        <div className={styles.bar} />
+                    </div>
+                </div>
+
+                <MegaHotBox
+                    open={!!selectObject}
+                    loading={loading}
+                    selectedMenuIndex={selectedMenuIndex}
+                    name={selectObject ? selectObject.name : null}
+                    description={selectObject ? selectObject.description : null}
+                    imageBitmap={imageBitmap}
+                    onActivate={onDoubleClick(selectObject)}
+                    mintEnabled={isChainSupported(selectedChain) && account.currentAddress}
+                    onMint={() => {
+                        mintClaim(selectObject);
+                        console.log("mint object", selectObject)
                     }}
-                >
-                    <EquipmentItems
-                        leftText="Land"
-                        rightText="Season"
-                        sections={[
-                            {
-                                name: 'Inventory',
-                                tokens: claims,
-                            },
-                            {
-                                name: 'Claimed',
-                                tokens: inventoryObject,
-                          },
-                        ]}
-                        hoverObject={hoverObject}
-                        selectObject={selectObject}
-                        loading={loading}
-                        onMouseEnter={onMouseEnter}
-                        onMouseDown={onMouseDown}
-                        onDragStart={onDragStart}
-                        onDoubleClick={onDoubleClick}
-                        menuLeft={menuLeft}
-                        menuRight={menuRight}
-                        highlights={true}
-                        ItemClass={ObjectItem}
-                    />
-                    <EquipmentItems
-                        leftText="Inventory"
-                        rightText="Account"
-                        sections={[
-                            {
-                                name: 'Season',
-                                tokens: userTokenObjects,
-                            },
-                            {
-                                name: 'From Upstreet',
-                                tokens: objects.upstreet,
-                            },
-                        ]}
-                        hoverObject={hoverObject}
-                        selectObject={selectObject}
-                        loading={loading}
-                        onMouseEnter={onMouseEnter}
-                        onMouseDown={onMouseDown}
-                        onDragStart={onDragStart}
-                        onDoubleClick={onDoubleClick}
-                        menuLeft={menuLeft}
-                        menuRight={menuRight}
-                        highlights={false}
-                        ItemClass={ObjectItem}
-                    />
-                    <EquipmentItems
-                        leftText="Season"
-                        rightText="Land"
-                        sections={[
-                            {
-                                name: 'Account',
-                                tokens: [],
-                            },
-                        ]}
-                        hoverObject={hoverObject}
-                        selectObject={selectObject}
-                        loading={loading}
-                        onMouseEnter={onMouseEnter}
-                        onMouseDown={onMouseDown}
-                        onDragStart={onDragStart}
-                        onDoubleClick={onDoubleClick}
-                        menuLeft={menuLeft}
-                        menuRight={menuRight}
-                        highlights={false}
-                        ItemClass={ObjectItem}
-                    />
-                    <EquipmentItems
-                        leftText="Account"
-                        rightText="Inventory"
-                        sections={[
-                            {
-                                name: 'Public',
-                                tokens: landTokenObjects,
-                            },
-                        ]}
-                        hoverObject={hoverObject}
-                        selectObject={selectObject}
-                        loading={loading}
-                        onMouseEnter={onMouseEnter}
-                        onMouseDown={onMouseDown}
-                        onDragStart={onDragStart}
-                        onDoubleClick={onDoubleClick}
-                        menuLeft={menuLeft}
-                        menuRight={menuRight}
-                        highlights={false}
-                        ItemClass={LandItem}
-                    />
-                </div>
+                    onClose={e => {
+                        setSelectObject(null);
+                    }}
+                />
             </div>
-
-            <div className={classnames(
-                styles.menuFooter,
-                open ? styles.open : null,
-                selectClassName,
-            )}>
-                <div className={styles.menuFooterWrap}>
-                    {equipmentTabs.map((imgFileName, i) => {
-                        return (
-                            <div
-                                className={classnames(
-                                    styles.menuFooterItem,
-                                    selectedMenuIndex === i ? styles.selected : null,
-                                )}
-                                onClick={e => {
-                                    const delta = i - selectedMenuIndex;
-                                    setFaceIndex(faceIndex + delta);
-
-                                    sounds.playSoundName('menuNext');
-                                }}
-                                key={i}
-                            >
-                                <img className={styles.img} src={`./images/equipment/${imgFileName}`} />
-                            </div>
-                        );
-                    })}
-                    <div className={styles.bar} />
-                </div>
-            </div>
-
-            <MegaHotBox
-                open={!!selectObject}
-                loading={loading}
-                selectedMenuIndex={selectedMenuIndex}
-                name={selectObject ? selectObject.name : null}
-                description={selectObject ? selectObject.description : null}
-                imageBitmap={imageBitmap}
-                onActivate={onDoubleClick(selectObject)}
-                mintEnabled={isChainSupported(selectedChain) && account.currentAddress}
-                onMint={() => {
-                    mintClaim(selectObject);
-                    console.log("mint object", selectObject)
-                }}
-                onClose={e => {
-                    setSelectObject(null);
-                }}
-            />
-        </div>
+        </>
+        
     );
 };
