@@ -46,6 +46,7 @@ import physxWorkerManager from './physx-worker-manager.js';
 import story from './story.js';
 import zTargeting from './z-targeting.js';
 import raycastManager from './raycast-manager.js';
+import npcManager from './npc-manager.js';
 
 const localVector = new THREE.Vector3();
 const localVector2 = new THREE.Vector3();
@@ -311,6 +312,7 @@ export default class Webaverse extends EventTarget {
           if (this.contentLoaded && physicsScene.getPhysicsEnabled()) {
             physicsScene.simulatePhysics(timeDiffCapped);
             localPlayer.updatePhysics(timestamp, timeDiffCapped);
+            npcManager.npcs.forEach(npc => !npc.isLocalPlayer && npc.updatePhysics(timestamp, timeDiffCapped))
           }
 
           transformControls.update();
@@ -318,6 +320,7 @@ export default class Webaverse extends EventTarget {
           game.update(timestamp, timeDiffCapped);
           
           localPlayer.updateAvatar(timestamp, timeDiffCapped);
+          npcManager.npcs.forEach(npc => !npc.isLocalPlayer && npc.updateAvatar(timestamp, timeDiffCapped))
           playersManager.updateRemotePlayers(timestamp, timeDiffCapped);
           
           world.appManager.tick(timestamp, timeDiffCapped, frame);

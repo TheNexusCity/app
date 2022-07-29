@@ -156,10 +156,10 @@ class NpcManager extends EventTarget {
         const walkSpeed = 0.075 * slowdownFactor;
         const runSpeed = walkSpeed * 8;
         const speedDistanceRate = 0.07;
+        
         const frame = e => {
-          if (npcPlayer && physicsScene.getPhysicsEnabled()) {
+          if (npcPlayer && physicsScene.getPhysicsEnabled() && !npcPlayer.isLocalPlayer) {
             const {timestamp, timeDiff} = e.data;
-            
             if (targetSpec) {
               const target = targetSpec.object;
               const v = localVector.setFromMatrixPosition(target.matrixWorld)
@@ -175,20 +175,7 @@ class NpcManager extends EventTarget {
                 npcPlayer.characterPhysics.applyWasd(v);
               }
             }
-
             npcPlayer.setTarget(localPlayer.position);
-
-            /* if (isNaN(npcPlayer.position.x)) {
-              debugger;
-            } */
-            npcPlayer.updatePhysics(timestamp, timeDiff);
-            /* if (isNaN(npcPlayer.position.x)) {
-              debugger;
-            } */
-            npcPlayer.updateAvatar(timestamp, timeDiff);
-            /* if (isNaN(npcPlayer.position.x)) {
-              debugger;
-            } */
           }
         };
         world.appManager.addEventListener('frame', frame);
