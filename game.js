@@ -496,6 +496,7 @@ const _gameUpdate = (timestamp, timeDiff) => {
   const _updateGrab = () => {
     const renderer = getRenderer();
     const _isWear = o => localPlayer.findAction(action => action.type === 'wear' && action.instanceId === o.instanceId);
+    const _hasNpcLocalPlayer = app => app.appType === 'npc' && app.npcPlayer && app.npcPlayer.isLocalPlayer;
 
     grabUseMesh.visible = false;
     if (!gameManager.editMode) {
@@ -511,7 +512,7 @@ const _gameUpdate = (timestamp, timeDiff) => {
         const object = metaversefileApi.getAppByPhysicsId(physicsId);
         // console.log('got collision', physicsId, object);
         const physicsObject = metaversefileApi.getPhysicsObjectByPhysicsId(physicsId);
-        if (object && !_isWear(object) && physicsObject) {
+        if (object && !_isWear(object) && physicsObject && !object.getComponent('nonItem') && !_hasNpcLocalPlayer(object)) {
           grabUseMesh.position.setFromMatrixPosition(physicsObject.physicsMesh.matrixWorld);
           grabUseMesh.quaternion.copy(camera.quaternion);
           grabUseMesh.updateMatrixWorld();
